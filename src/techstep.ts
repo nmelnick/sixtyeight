@@ -1,7 +1,5 @@
-import { SerialPort } from 'serialport';
-import { ReadlineParser } from '@serialport/parser-readline';
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+import { hexToNumber, numberToHex, splitNumberTwoBytes } from './convert.js';
+import type { SerialConnection } from './serial.js';
 
 type TechStepCommand = 'V' | 'S' | 'A' | 'H' | 'R' | 'T' | 'N' | 'L' | 'B' | 'D' | 'M' | 'C' | 'G' | '0' | '1' | '2' | '3' | '2' | '3' | '4' | '5' | '6' | '7' | 'P' | 'E' | 'I' | 'W' | 'Q' | 'U' | 'Z';
 
@@ -80,13 +78,15 @@ export interface BannerResult {
 }
 
 export class TechStep {
-  private connection: SerialPort;
+  private serial: SerialConnection;
   private userRequestedCancel: boolean = false;
 
   public inUse: boolean = false;
+  public lastError: number = 0;
+  public lastStatus: number = 0;
 
-  constructor(connection: SerialPort) {
-    this.connection = connection;
+  constructor(serial: SerialConnection) {
+    this.serial = serial;
   }
 
   public async cancel() {
@@ -134,11 +134,28 @@ export class TechStep {
     },
     dataBusTest: async(startAddress: number, numberOfAttempts: number = 1, testFlags?: TestFlag[]) => {
       this.startConversation();
-      const [ address1, address2 ] = startAddress.toString(16).padStart(8, '0').match(/.{4}/g) || ['',''];
-      await this.command(COMMANDS.LoadA0, parseInt(address1), parseInt(address2));
+      await this.command(COMMANDS.LoadA0, ...splitNumberTwoBytes(startAddress));
       await this.runCriticalTest(1, numberOfAttempts, testFlags);
       this.stopConversation();
-    }
+    },
+    mod3RamTest: async(startAddress: number, endAddress: number, numberOfAttempts: number = 1, testFlags?: TestFlag[]) => {
+      this.startConversation();
+      await this.command(COMMANDS.LoadA0, ...splitNumberTwoBytes(startAddress));
+      await this.command(COMMANDS.LoadA1, ...splitNumberTwoBytes(endAddress));
+      await this.runCriticalTest(2, numberOfAttempts, testFlags);
+      this.stopConversation();
+    },
+    addressLineTest: async(memorySize: number, numberOfAttempts: number = 1, testFlags?: TestFlag[]) => {
+      this.startConversation();
+      await this.command(COMMANDS.LoadA0, ...splitNumberTwoBytes(memorySize));
+      await this.runCriticalTest(3, numberOfAttempts, testFlags);
+      this.stopConversation();
+    },
+    romChecksum: async (numberOfAttempts: number = 1, testFlags?: TestFlag[]) => {
+      this.startConversation();
+      await this.runCriticalTest(4, numberOfAttempts, testFlags);
+      this.stopConversation();
+    },
   };
 
   private async runCriticalTest(testNumber: number, numberOfAttempts: number, testFlags?: TestFlag[]) {
@@ -170,28 +187,19 @@ export class TechStep {
   }
 
   private parseResult(result: string): [number,number] {
-    return [parseInt(result.substring(0, 8), 16), parseInt(result.substring(8), 16)];
+    const status = hexToNumber(result.substring(0, 8));
+    const error = hexToNumber(result.substring(8));
+    this.lastStatus = status;
+    this.lastError = error;
+    return [status, error];
   }
 
   private async waitForBanner(): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const onError = (error: any) => {
-        this.connection.off('error', onError);
-        console.error(error);
-        reject(error);
-      };
-      const onData = (line: string) => {
-        waiter.off('data', onData);
-        console.log(`Received: ${line}`);
-        if (line.indexOf('APPLE') > -1) {
-          return resolve(line);
-        }
-        return reject();
-      };
-
-      const waiter = this.connection.pipe(new ReadlineParser({ delimiter: '\r' }));
-      waiter.on('data', onData);
-    });
+    const line = await this.serial.waitForResponse();
+    if (line.indexOf('APPLE') > -1) {
+      return line;
+    }
+    throw new Error();
   }
 
   private async command(letter: TechStepCommand, word1?: number, word2?: number, word3?: number): Promise<string | void> {
@@ -199,7 +207,7 @@ export class TechStep {
     let words = '';
     for (const word of [word1, word2, word3]) {
       if (word != null) {
-        words = words + word.toString(16).padStart(4, '0');
+        words = words + numberToHex(word);
       }
     }
     const ascii = [prefix, words].join('');
@@ -207,28 +215,15 @@ export class TechStep {
   }
 
   private async executeSerial(command: string, waitFor?: string): Promise<string | void> {
-    return new Promise(async (resolve, reject) => {
-      const onError = (error: any) => {
-        this.connection.off('error', onError);
-        console.error(error);
-        reject(error);
-      };
-      const onData = (line: string) => {
-        console.log(`Received: "${line}"`);
-        waiter.off('data', onData);
-        if (waitFor && line === waitFor) {
-          return resolve();
-        } else if (waitFor && line.indexOf('ERROR') > -1) {
-          return reject(line);
-        }
-        return resolve(line);
-      };
-
-      this.connection.on('error', onError);
-      const waiter = this.connection.pipe(new ReadlineParser({ delimiter: '\r\n' }));
-      waiter.on('data', onData);
-      await this.write(command);
-    });
+    await this.serial.send(command);
+    const result = await this.serial.waitForResponse();
+    if (waitFor && result === waitFor) {
+      return;
+    } else if (waitFor && result.indexOf('ERROR') > -1) {
+      this.stopConversation();
+      throw new Error(result);
+    }
+    return result;
   }
 
   private startConversation() {
@@ -244,17 +239,8 @@ export class TechStep {
 
   private async checkCancel(): Promise<void> {
     if (this.inUse && this.userRequestedCancel) {
+      this.stopConversation();
       throw new Error('User cancel');
-    }
-  }
-
-  private async write(output: string): Promise<void> {
-    await sleep(200);
-    console.log(`Writing: ${output}`);
-    for (const c of output.split('')) {
-      // console.log(` - Outputting ${c}`);
-      this.connection.write(c);
-      await sleep(10);
     }
   }
 }

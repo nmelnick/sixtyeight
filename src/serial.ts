@@ -1,8 +1,96 @@
 import { SerialPort } from 'serialport';
+import { ReadlineParser } from '@serialport/parser-readline';
 import { Config } from './config.js';
+import EventEmitter from 'node:events';
 
-export const serialPort = new SerialPort({
-  path: Config.serialPort,
-  baudRate: 9600,
-  stopBits: 2,
-});
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const LINE_DELAY_MS = 180;
+const CHAR_DELAY_MS = 8;
+
+export class SerialConnection {
+  private serialPort: SerialPort;
+  private locked: boolean = false;
+  private responseQueue: string[] = [];
+  private arrayEmitter = new EventEmitter();
+
+  constructor() {
+    this.serialPort = new SerialPort({
+      path: Config.serialPort,
+      baudRate: 9600,
+      stopBits: 2,
+    });
+    this.serialPort.on('data', (data) => {
+      if (data[0] === '?') {
+        this.responseQueue.push(data.toString());
+        this.arrayEmitter.emit('queued-line');
+      }
+    });
+    this.serialPort.on('error', (error) => {
+      console.log(`Error: ${error}`);
+    });
+    const asLines = this.serialPort.pipe(new ReadlineParser({ delimiter: '\r\n' }));
+    asLines.on('data', (line) => {
+        this.responseQueue.push(line);
+        this.arrayEmitter.emit('queued-line');
+    });
+    this.arrayEmitter.on('queued-line', () => {
+      console.log(`Received: "${this.responseQueue[0].replace(/[\r\n]/g, '')}"`);
+    });
+  }
+
+  public lock() {
+    this.locked = true;
+  }
+
+  public unlock() {
+    this.locked = false;
+  }
+
+  public async send(output: string): Promise<void> {
+    while (this.locked) {
+      await sleep(10);
+    }
+    this.lock();
+    await sleep(LINE_DELAY_MS);
+    console.log(`Writing: "${output}"`);
+    for (const c of output.split('')) {
+      // console.log(` - Outputting ${c}`);
+      this.serialPort.write(c);
+      await sleep(CHAR_DELAY_MS);
+    }
+    this.unlock();
+  }
+
+  public async waitForResponse(): Promise<string> {
+    return new Promise(async (resolve, reject) => {
+      this.lock();
+      let answered = false;
+      // Return if one is already there
+      if (this.responseQueue.length > 0) {
+      this.unlock();
+        return resolve(this.responseQueue.shift() || '');
+      }
+
+      // Return line if one is queued
+      const onQueued = () => {
+        answered = true;
+        this.unlock();
+        return resolve(this.responseQueue.shift() || '');
+      };
+      this.arrayEmitter.once('queued-line', onQueued);
+
+      // Reject with a timeout if we hit 60s without
+      for (let i = 0; i < 60; i++) {
+        await sleep(1000);
+        if (answered) {
+          break;
+        }
+      }
+      if (answered === false) {
+        this.arrayEmitter.removeListener('queued-line', onQueued);
+        this.unlock();
+        reject('Timeout');
+      }
+    });
+  }
+}
