@@ -11,7 +11,7 @@
     "start": "tsc && node dist/index.js",
     "test": "vitest run",
     "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src}/**/*.ts --fix"
+    "lint:fix": "eslint src/**/*.ts --fix"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",

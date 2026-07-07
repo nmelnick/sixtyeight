@@ -6,7 +6,7 @@ export class ActivityLog extends Card {
   private scrollOffset: number = 0;
 
   constructor(x: number, y: number, width: number, height: number) {
-    super('Activity [L]og', x, y, width, height);
+    super("Activity [L]og", x, y, width, height);
   }
 
   public resize(x: number, y: number, width: number, height: number): void {
@@ -20,7 +20,10 @@ export class ActivityLog extends Card {
     const lines = Logger.getLines();
     const visibleRows = this.height - 3;
     const maxOffset = Math.max(0, lines.length - visibleRows);
-    this.scrollOffset = Math.min(maxOffset, Math.max(0, this.scrollOffset + delta));
+    this.scrollOffset = Math.min(
+      maxOffset,
+      Math.max(0, this.scrollOffset + delta),
+    );
   }
 
   public resetScroll(): void {
@@ -36,23 +39,24 @@ export class ActivityLog extends Card {
     const innerWidth = this.width - 4;
 
     visible.forEach((line, i) => {
-      const clipped = line.length > innerWidth ? line.slice(0, innerWidth) : line;
+      const clipped =
+        line.length > innerWidth ? line.slice(0, innerWidth) : line;
       this.writeRelative(buf, 2, 2 + i, clipped);
     });
   }
 
   public handleKey(key: string): boolean {
     switch (key) {
-      case 'up':
+      case "up":
         this.scroll(1);
         return true;
-      case 'down':
+      case "down":
         this.scroll(-1);
         return true;
-      case 'pageup':
+      case "pageup":
         this.scroll(Math.max(1, this.height - 4));
         return true;
-      case 'pagedown':
+      case "pagedown":
         this.scroll(-Math.max(1, this.height - 4));
         return true;
       default:

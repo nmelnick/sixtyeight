@@ -41,7 +41,12 @@ export class MenuCard extends Card {
     width: number,
     height: number,
     items: MenuItem[],
-    options?: { onPush?: (card: Card) => void; onPop?: () => void; isBusy?: () => boolean; secondColumnX?: number },
+    options?: {
+      onPush?: (card: Card) => void;
+      onPop?: () => void;
+      isBusy?: () => boolean;
+      secondColumnX?: number;
+    },
   ) {
     super(title, x, y, width, height);
     this.items = items;
@@ -53,7 +58,7 @@ export class MenuCard extends Card {
   }
 
   private isEnabled(item: MenuItem): boolean {
-    if (typeof item.enabled === 'function') {
+    if (typeof item.enabled === "function") {
       return item.enabled();
     }
     return item.enabled !== false;
@@ -64,7 +69,9 @@ export class MenuCard extends Card {
   }
 
   private rowOf(item: MenuItem, index: number): number {
-    const columnItems = this.items.filter((i) => this.columnOf(i) === this.columnOf(item));
+    const columnItems = this.items.filter(
+      (i) => this.columnOf(i) === this.columnOf(item),
+    );
     return columnItems.indexOf(item);
   }
 
@@ -78,7 +85,13 @@ export class MenuCard extends Card {
       const selected = index === this.selectedIndex;
 
       if (this.editingValue !== undefined && selected && item.field) {
-        this.writeRelative(buf, dx, dy, `${item.key}. ${item.label}: ${this.editingValue}_`, CellAttr.Reverse);
+        this.writeRelative(
+          buf,
+          dx,
+          dy,
+          `${item.key}. ${item.label}: ${this.editingValue}_`,
+          CellAttr.Reverse,
+        );
         return;
       }
 
@@ -105,22 +118,26 @@ export class MenuCard extends Card {
     }
 
     switch (key) {
-      case 'up':
+      case "up":
         this.moveSelection(0, -1);
         return true;
-      case 'down':
+      case "down":
         this.moveSelection(0, 1);
         return true;
-      case 'left':
+      case "left":
         this.moveSelection(-1, 0);
         return true;
-      case 'right':
+      case "right":
         this.moveSelection(1, 0);
         return true;
-      case 'return':
-        this.activate(this.selectedIndex !== null ? this.items[this.selectedIndex] : undefined);
+      case "return":
+        this.activate(
+          this.selectedIndex !== null
+            ? this.items[this.selectedIndex]
+            : undefined,
+        );
         return true;
-      case 'escape':
+      case "escape":
         this.onPop?.();
         return true;
       default:
@@ -129,11 +146,13 @@ export class MenuCard extends Card {
   }
 
   private handleDirectKey(key: string): boolean {
-    const index = this.items.findIndex((item) => item.key.toLowerCase() === key.toLowerCase());
+    const index = this.items.findIndex(
+      (item) => item.key.toLowerCase() === key.toLowerCase(),
+    );
     if (index < 0) {
       return false;
     }
-    const item = this.items[index]!;
+    const item = this.items[index];
     if (!this.isEnabled(item)) {
       return false;
     }
@@ -158,7 +177,7 @@ export class MenuCard extends Card {
     }
     const currentColumn = this.columnOf(current);
     const currentRow = this.rowOf(current, this.selectedIndex);
-    const targetColumn = (currentColumn + dCol + 2) % 2 as 0 | 1;
+    const targetColumn = ((currentColumn + dCol + 2) % 2) as 0 | 1;
 
     const candidates = this.items
       .map((item, index) => ({ item, index, row: this.rowOf(item, index) }))
@@ -170,7 +189,7 @@ export class MenuCard extends Card {
     }
 
     if (dCol !== 0) {
-      let best = candidates[0]!;
+      let best = candidates[0];
       for (const c of candidates) {
         if (Math.abs(c.row - currentRow) < Math.abs(best.row - currentRow)) {
           best = c;
@@ -209,24 +228,27 @@ export class MenuCard extends Card {
   }
 
   private handleEditKey(key: string): boolean {
-    if (key === 'return') {
-      const item = this.selectedIndex !== null ? this.items[this.selectedIndex] : undefined;
+    if (key === "return") {
+      const item =
+        this.selectedIndex !== null
+          ? this.items[this.selectedIndex]
+          : undefined;
       if (item?.field && this.editingValue !== undefined) {
         item.field.onSubmit(this.editingValue);
       }
       this.editingValue = undefined;
       return true;
     }
-    if (key === 'escape') {
+    if (key === "escape") {
       this.editingValue = undefined;
       return true;
     }
-    if (key === 'backspace') {
-      this.editingValue = (this.editingValue ?? '').slice(0, -1);
+    if (key === "backspace") {
+      this.editingValue = (this.editingValue ?? "").slice(0, -1);
       return true;
     }
     if (key.length === 1) {
-      this.editingValue = (this.editingValue ?? '') + key;
+      this.editingValue = (this.editingValue ?? "") + key;
       return true;
     }
     return true;

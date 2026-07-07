@@ -2,24 +2,31 @@ import { numberToHex } from "../convert.js";
 
 function padBetween(left: string, right: string, width: number): string {
   const gap = Math.max(1, width - left.length - right.length);
-  return left + ' '.repeat(gap) + right;
+  return left + " ".repeat(gap) + right;
 }
 
 function formatElapsed(ms: number): string {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-export function topBar(width: number, connected: boolean, port: string, machineIdentity?: string): string {
-  const left = ' sixtyeight 1.0.0' + (machineIdentity ? ` - Macintosh ${machineIdentity}` : '');
-  const right = `[S] ${connected ? 'Connected' : 'Disconnected'} - ${port}`;
+export function topBar(
+  width: number,
+  connected: boolean,
+  port: string,
+  machineIdentity?: string,
+): string {
+  const left =
+    " sixtyeight 1.0.0" +
+    (machineIdentity ? ` - Macintosh ${machineIdentity}` : "");
+  const right = `[S] ${connected ? "Connected" : "Disconnected"} - ${port}`;
   return padBetween(left, right, width);
 }
 
 export function separatorLine(width: number): string {
-  return '-'.repeat(width);
+  return "-".repeat(width);
 }
 
 export function bottomBar(

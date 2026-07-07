@@ -29,7 +29,11 @@ export class CardStack {
   private width: number = 80;
   private height: number = 25;
 
-  constructor(root: MenuCard, activityLog: ActivityLog, status: StatusProvider) {
+  constructor(
+    root: MenuCard,
+    activityLog: ActivityLog,
+    status: StatusProvider,
+  ) {
     this.root = root;
     this.activityLog = activityLog;
     this.status = status;
@@ -49,12 +53,14 @@ export class CardStack {
   }
 
   private topCard(): Card {
-    return this.stack.length > 0 ? this.stack[this.stack.length - 1]! : this.root;
+    return this.stack.length > 0
+      ? this.stack[this.stack.length - 1]
+      : this.root;
   }
 
   public handleKey(key: string): void {
     if (this.logExpanded) {
-      if (key === 'escape') {
+      if (key === "escape") {
         this.logExpanded = false;
         this.layout(this.width, this.height);
       } else {
@@ -65,7 +71,7 @@ export class CardStack {
 
     const top = this.topCard();
     const editing = top instanceof MenuCard && top.isEditing();
-    if (!editing && (key === 'l' || key === 'L')) {
+    if (!editing && (key === "l" || key === "L")) {
       this.logExpanded = true;
       this.activityLog.resetScroll();
       this.layout(this.width, this.height);
@@ -84,8 +90,13 @@ export class CardStack {
     const availableHeight = Math.max(0, bottomSeparatorY - mainY);
     const activityLogHeight = this.logExpanded
       ? availableHeight
-      : Math.max(ACTIVITY_LOG_MIN_HEIGHT, Math.round(availableHeight * ACTIVITY_LOG_RATIO));
-    const activityLogY = this.logExpanded ? mainY : bottomSeparatorY - activityLogHeight;
+      : Math.max(
+          ACTIVITY_LOG_MIN_HEIGHT,
+          Math.round(availableHeight * ACTIVITY_LOG_RATIO),
+        );
+    const activityLogY = this.logExpanded
+      ? mainY
+      : bottomSeparatorY - activityLogHeight;
 
     this.root.x = 1;
     this.root.y = mainY;
@@ -101,7 +112,12 @@ export class CardStack {
       parent = card;
     }
 
-    this.activityLog.resize(1, activityLogY, Math.max(10, width - ROOT_RIGHT_MARGIN), Math.max(3, activityLogHeight));
+    this.activityLog.resize(
+      1,
+      activityLogY,
+      Math.max(10, width - ROOT_RIGHT_MARGIN),
+      Math.max(3, activityLogHeight),
+    );
   }
 
   public render(): Buffer2D {
@@ -110,7 +126,12 @@ export class CardStack {
     buf.writeText(
       0,
       0,
-      topBar(this.width, this.status.isConnected(), this.status.getPort(), this.status.getMachineIdentity()),
+      topBar(
+        this.width,
+        this.status.isConnected(),
+        this.status.getPort(),
+        this.status.getMachineIdentity(),
+      ),
       CellAttr.Header,
     );
     buf.writeText(0, 1, separatorLine(this.width), CellAttr.Border);
@@ -126,7 +147,12 @@ export class CardStack {
 
     this.activityLog.render(buf);
 
-    buf.writeText(0, this.height - 2, separatorLine(this.width), CellAttr.Border);
+    buf.writeText(
+      0,
+      this.height - 2,
+      separatorLine(this.width),
+      CellAttr.Border,
+    );
     buf.writeText(
       0,
       this.height - 1,
