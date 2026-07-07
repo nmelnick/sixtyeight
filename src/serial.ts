@@ -1,6 +1,7 @@
 import { SerialPort } from 'serialport';
 import { ReadlineParser } from '@serialport/parser-readline';
 import { Config } from './config.js';
+import { Logger } from './logger.js';
 import EventEmitter from 'node:events';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -26,7 +27,7 @@ export class SerialConnection {
       }
     });
     this.serialPort.on('error', (error) => {
-      console.log(`Error: ${error}`);
+      Logger.error(`${error}`);
     });
     const asLines = this.serialPort.pipe(new ReadlineParser({ delimiter: '\r\n' }));
     asLines.on('data', (line) => {
@@ -34,7 +35,7 @@ export class SerialConnection {
         this.arrayEmitter.emit('queued-line');
     });
     this.arrayEmitter.on('queued-line', () => {
-      console.log(`Received: "${this.responseQueue[0].replace(/[\r\n]/g, '')}"`);
+      Logger.log(`Received: "${this.responseQueue[0].replace(/[\r\n]/g, '')}"`);
     });
   }
 
@@ -52,9 +53,8 @@ export class SerialConnection {
     }
     this.lock();
     await sleep(LINE_DELAY_MS);
-    console.log(`Writing: "${output}"`);
+    Logger.log(`Writing: "${output}"`);
     for (const c of output.split('')) {
-      // console.log(` - Outputting ${c}`);
       this.serialPort.write(c);
       await sleep(CHAR_DELAY_MS);
     }
@@ -67,7 +67,7 @@ export class SerialConnection {
       let answered = false;
       // Return if one is already there
       if (this.responseQueue.length > 0) {
-      this.unlock();
+        this.unlock();
         return resolve(this.responseQueue.shift() || '');
       }
 

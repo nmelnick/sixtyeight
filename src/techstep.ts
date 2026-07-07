@@ -1,5 +1,8 @@
 import { hexToNumber, numberToHex, splitNumberTwoBytes } from './convert.js';
+import { Logger } from './logger.js';
 import type { SerialConnection } from './serial.js';
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 type TechStepCommand = 'V' | 'S' | 'A' | 'H' | 'R' | 'T' | 'N' | 'L' | 'B' | 'D' | 'M' | 'C' | 'G' | '0' | '1' | '2' | '3' | '2' | '3' | '4' | '5' | '6' | '7' | 'P' | 'E' | 'I' | 'W' | 'Q' | 'U' | 'Z';
 
@@ -28,30 +31,24 @@ const COMMANDS: Record<string,TechStepCommand> = {
 };
 
 const MACHINE_TYPES: Record<string,string> = {
-  '1': 'Mac II(256kb ROM family, includes SE/30)',
+  '1': 'II or SE/30',
   '2': 'SE',
-  '3': 'Plus (Not likely to have any test mode)',
-  '4': 'LaserWriter NTX',
-  '5': 'LaserWriter NT',
+  '3': 'Plus',
   '6': 'Portable',
-  '7': 'Mac IIci',
+  '7': 'IIci',
   '8': 'IIfx',
-  '9': 'LaserWriter SC',
   'A': 'IIci',
   'B': 'Classic',
   'C': 'IIsi',
   'D': 'LC',
   'E': 'Quadra 900',
-  'F': 'LaserWriter IIg',
-  'G': 'LaserWriter IIf',
   'H': 'PowerBook 170',
   'I': 'Quadra 700',
   'J': 'Classic II',
-  'K': 'PowerBook 100 (Unreleased ROM?)',
   'L': 'PowerBook 140',
   'M': 'Quadra 950',
   'N': 'LC III',
-  'O': 'Indicates the IIvx family like IIvi, P600',
+  'O': 'IIvx/IIvi',
   'Q': 'Centris 650',
   'R': 'Color Classic',
   'T': 'PowerBook 180',
@@ -96,21 +93,21 @@ export class TechStep {
   }
 
   public async ascii() {
-    this.startConversation();
+    await this.startConversation();
     const result = await this.command(COMMANDS.AsciiMode);
     this.stopConversation();
     return result;
   }
 
   public async version() {
-    this.startConversation();
+    await this.startConversation();
     const result = await this.command(COMMANDS.Version);
     this.stopConversation();
     return result;
   }
 
   public async banner() {
-    this.startConversation();
+    await this.startConversation();
     await this.command(COMMANDS.StartBootMsg);
     const banner = await this.waitForBanner();
     await this.command(COMMANDS.StopBanner);
@@ -120,39 +117,45 @@ export class TechStep {
   }
 
   public async getReturnStatus(): Promise<[number, number]> {
-    this.startConversation();
+    await this.startConversation();
     const result = await this.command(COMMANDS.ReturnStatus);
     this.stopConversation();
     return this.parseResult(result || '');
   }
 
+  public async clearResult(): Promise<void> {
+    await this.startConversation();
+    await this.command(COMMANDS.ClearResult);
+    await this.stopConversation();
+  }
+
   public criticalTest = {
     sizeMemory: async (numberOfAttempts: number = 1, testFlags?: TestFlag[]) => {
-      this.startConversation();
+      await this.startConversation();
       await this.runCriticalTest(0, numberOfAttempts, testFlags);
       this.stopConversation();
     },
     dataBusTest: async(startAddress: number, numberOfAttempts: number = 1, testFlags?: TestFlag[]) => {
-      this.startConversation();
+      await this.startConversation();
       await this.command(COMMANDS.LoadA0, ...splitNumberTwoBytes(startAddress));
       await this.runCriticalTest(1, numberOfAttempts, testFlags);
       this.stopConversation();
     },
     mod3RamTest: async(startAddress: number, endAddress: number, numberOfAttempts: number = 1, testFlags?: TestFlag[]) => {
-      this.startConversation();
+      await this.startConversation();
       await this.command(COMMANDS.LoadA0, ...splitNumberTwoBytes(startAddress));
       await this.command(COMMANDS.LoadA1, ...splitNumberTwoBytes(endAddress));
       await this.runCriticalTest(2, numberOfAttempts, testFlags);
       this.stopConversation();
     },
     addressLineTest: async(memorySize: number, numberOfAttempts: number = 1, testFlags?: TestFlag[]) => {
-      this.startConversation();
+      await this.startConversation();
       await this.command(COMMANDS.LoadA0, ...splitNumberTwoBytes(memorySize));
       await this.runCriticalTest(3, numberOfAttempts, testFlags);
       this.stopConversation();
     },
     romChecksum: async (numberOfAttempts: number = 1, testFlags?: TestFlag[]) => {
-      this.startConversation();
+      await this.startConversation();
       await this.runCriticalTest(4, numberOfAttempts, testFlags);
       this.stopConversation();
     },
@@ -173,7 +176,7 @@ export class TechStep {
 
   private parseBanner(banner: string): BannerResult {
     if (!banner.startsWith('*APPLE*')) {
-      console.error(`Invalid banner: ${banner}`);
+      Logger.error(`Invalid banner: ${banner}`);
       throw new Error('Invalid banner');
     }
     const [ b, a, result, identifier ] = banner.split('*');
@@ -226,8 +229,9 @@ export class TechStep {
     return result;
   }
 
-  private startConversation() {
+  private async startConversation() {
     while (this.inUse) {
+      await sleep(10);
     }
     this.inUse = true;
   }

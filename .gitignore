@@ -1,2 +1,6 @@
 node_modules
 dist
+sixtyeight.config.json
+
+vitest.config.js*
+vitest.config.d*

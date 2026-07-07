@@ -1,22 +1,52 @@
-import { EventEmitter } from 'node:events';
 import { describe, expect, it } from 'vitest';
 import { TechStep } from './techstep.js';
 
-class FakeConnection extends EventEmitter {
+class FakeConnection {
   public written: string[] = [];
-  private piped: any = null;
+  private queue: string[] = [];
+  private queuedError: { error: unknown } | null = null;
+  private pendingResolve: ((line: string) => void) | null = null;
+  private pendingReject: ((err: unknown) => void) | null = null;
 
-  pipe(destination: any) {
-    this.piped = destination;
-    return destination;
+  async send(output: string): Promise<void> {
+    this.written.push(output);
   }
 
-  write(data: string) {
-    this.written.push(data);
+  async waitForResponse(): Promise<string> {
+    if (this.queuedError) {
+      const { error } = this.queuedError;
+      this.queuedError = null;
+      throw error;
+    }
+    if (this.queue.length > 0) {
+      return this.queue.shift()!;
+    }
+    return new Promise((resolve, reject) => {
+      this.pendingResolve = resolve;
+      this.pendingReject = reject;
+    });
   }
 
-  respond(line: string) {
-    this.piped.write(Buffer.from(`${line}\r`));
+  respond(line: string): void {
+    if (this.pendingResolve) {
+      const resolve = this.pendingResolve;
+      this.pendingResolve = null;
+      this.pendingReject = null;
+      resolve(line);
+    } else {
+      this.queue.push(line);
+    }
+  }
+
+  fail(error: unknown): void {
+    if (this.pendingReject) {
+      const reject = this.pendingReject;
+      this.pendingResolve = null;
+      this.pendingReject = null;
+      reject(error);
+    } else {
+      this.queuedError = { error };
+    }
   }
 }
 
@@ -46,31 +76,31 @@ describe('TechStep', () => {
     await expect(resultPromise).resolves.toBe('v1.2.3');
   });
 
-  it('sends the return status command and returns the reply line', async () => {
+  it('sends the return status command and returns the parsed status and error', async () => {
     const { connection, techStep } = setup();
 
     const resultPromise = techStep.getReturnStatus();
-    connection.respond('0004');
+    connection.respond('0000000C0000');
 
-    await expect(resultPromise).resolves.toBe('0004');
+    await expect(resultPromise).resolves.toEqual([12, 0]);
     expect(connection.written).toEqual(['*R']);
   });
 
-  it('returns an empty string from getReturnStatus when the command only echoes', async () => {
+  it('returns NaN status/error from getReturnStatus when the command only echoes', async () => {
     const { connection, techStep } = setup();
 
     const resultPromise = techStep.getReturnStatus();
     connection.respond('*R');
 
-    await expect(resultPromise).resolves.toBe('');
+    await expect(resultPromise).resolves.toEqual([NaN, NaN]);
   });
 
-  it('rejects when the connection emits an error', async () => {
+  it('rejects when the connection fails while waiting for a response', async () => {
     const { connection, techStep } = setup();
 
     const resultPromise = techStep.version();
     const error = new Error('boom');
-    connection.emit('error', error);
+    connection.fail(error);
 
     await expect(resultPromise).rejects.toBe(error);
   });
