@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { TechStep } from './techstep.js';
+import { describe, expect, it } from "vitest";
+import { TechStep } from "./techstep.js";
+import type { SerialConnection } from "./serial.js";
 
 class FakeConnection {
   public written: string[] = [];
@@ -8,8 +9,9 @@ class FakeConnection {
   private pendingResolve: ((line: string) => void) | null = null;
   private pendingReject: ((err: unknown) => void) | null = null;
 
-  async send(output: string): Promise<void> {
+  send(output: string): Promise<void> {
     this.written.push(output);
+    return Promise.resolve();
   }
 
   async waitForResponse(): Promise<string> {
@@ -52,54 +54,54 @@ class FakeConnection {
 
 function setup() {
   const connection = new FakeConnection();
-  const techStep = new TechStep(connection as any);
+  const techStep = new TechStep(connection as unknown as SerialConnection);
   return { connection, techStep };
 }
 
-describe('TechStep', () => {
-  it('sends the version command and resolves when the device echoes it back', async () => {
+describe("TechStep", () => {
+  it("sends the version command and resolves when the device echoes it back", async () => {
     const { connection, techStep } = setup();
 
     const resultPromise = techStep.version();
-    connection.respond('*V');
+    connection.respond("*V");
 
     await expect(resultPromise).resolves.toBeUndefined();
-    expect(connection.written).toEqual(['*V']);
+    expect(connection.written).toEqual(["*V"]);
   });
 
-  it('resolves with the device reply when it differs from the echoed command', async () => {
+  it("resolves with the device reply when it differs from the echoed command", async () => {
     const { connection, techStep } = setup();
 
     const resultPromise = techStep.version();
-    connection.respond('v1.2.3');
+    connection.respond("v1.2.3");
 
-    await expect(resultPromise).resolves.toBe('v1.2.3');
+    await expect(resultPromise).resolves.toBe("v1.2.3");
   });
 
-  it('sends the return status command and returns the parsed status and error', async () => {
+  it("sends the return status command and returns the parsed status and error", async () => {
     const { connection, techStep } = setup();
 
     const resultPromise = techStep.getReturnStatus();
-    connection.respond('0000000C0000');
+    connection.respond("0000000C0000");
 
     await expect(resultPromise).resolves.toEqual([12, 0]);
-    expect(connection.written).toEqual(['*R']);
+    expect(connection.written).toEqual(["*R"]);
   });
 
-  it('returns NaN status/error from getReturnStatus when the command only echoes', async () => {
+  it("returns NaN status/error from getReturnStatus when the command only echoes", async () => {
     const { connection, techStep } = setup();
 
     const resultPromise = techStep.getReturnStatus();
-    connection.respond('*R');
+    connection.respond("*R");
 
     await expect(resultPromise).resolves.toEqual([NaN, NaN]);
   });
 
-  it('rejects when the connection fails while waiting for a response', async () => {
+  it("rejects when the connection fails while waiting for a response", async () => {
     const { connection, techStep } = setup();
 
     const resultPromise = techStep.version();
-    const error = new Error('boom');
+    const error = new Error("boom");
     connection.fail(error);
 
     await expect(resultPromise).rejects.toBe(error);

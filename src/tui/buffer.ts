@@ -54,8 +54,8 @@ export class Buffer2D {
     this.chars = [];
     this.attrs = [];
     for (let y = 0; y < height; y++) {
-      this.chars.push(new Array(width).fill(" "));
-      this.attrs.push(new Array(width).fill(CellAttr.Normal));
+      this.chars.push(new Array<string>(width).fill(" "));
+      this.attrs.push(new Array<CellAttr>(width).fill(CellAttr.Normal));
     }
   }
 

@@ -5,12 +5,12 @@ export interface CliArgs {
 export function parseArgs(argv: string[]): CliArgs {
   const args: CliArgs = {};
   for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i]!;
-    if (arg === '--port') {
+    const arg = argv[i];
+    if (arg === "--port") {
       args.port = argv[i + 1];
       i++;
-    } else if (arg.startsWith('--port=')) {
-      args.port = arg.slice('--port='.length);
+    } else if (arg.startsWith("--port=")) {
+      args.port = arg.slice("--port=".length);
     }
   }
   return args;

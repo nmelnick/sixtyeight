@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { MenuCard, type MenuItem } from "./menu-card.js";
+import type { Card } from "./card.js";
 
 function singleColumnItems(): MenuItem[] {
   return [
@@ -94,7 +95,11 @@ describe("MenuCard navigation", () => {
     const onPush = vi.fn();
     const child = { title: "child" };
     const items: MenuItem[] = [
-      { key: "1", label: "Critical Tests", submenu: () => child as any },
+      {
+        key: "1",
+        label: "Critical Tests",
+        submenu: () => child as unknown as Card,
+      },
     ];
     const menu = new MenuCard("Main Menu", 0, 0, 40, 10, items, { onPush });
 

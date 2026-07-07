@@ -1,10 +1,10 @@
-import { SerialPort } from 'serialport';
-import { ReadlineParser } from '@serialport/parser-readline';
-import { Config } from './config.js';
-import { Logger } from './logger.js';
-import EventEmitter from 'node:events';
+import { SerialPort } from "serialport";
+import { ReadlineParser } from "@serialport/parser-readline";
+import { Config } from "./config.js";
+import { Logger } from "./logger.js";
+import EventEmitter from "node:events";
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const LINE_DELAY_MS = 180;
 const CHAR_DELAY_MS = 8;
 
@@ -20,22 +20,24 @@ export class SerialConnection {
       baudRate: 9600,
       stopBits: 2,
     });
-    this.serialPort.on('data', (data) => {
-      if (data[0] === '?') {
+    this.serialPort.on("data", (data: Buffer) => {
+      if (data[0] === "?".charCodeAt(0)) {
         this.responseQueue.push(data.toString());
-        this.arrayEmitter.emit('queued-line');
+        this.arrayEmitter.emit("queued-line");
       }
     });
-    this.serialPort.on('error', (error) => {
+    this.serialPort.on("error", (error) => {
       Logger.error(`${error}`);
     });
-    const asLines = this.serialPort.pipe(new ReadlineParser({ delimiter: '\r\n' }));
-    asLines.on('data', (line) => {
-        this.responseQueue.push(line);
-        this.arrayEmitter.emit('queued-line');
+    const asLines = this.serialPort.pipe(
+      new ReadlineParser({ delimiter: "\r\n" }),
+    );
+    asLines.on("data", (line: string) => {
+      this.responseQueue.push(line);
+      this.arrayEmitter.emit("queued-line");
     });
-    this.arrayEmitter.on('queued-line', () => {
-      Logger.log(`Received: "${this.responseQueue[0].replace(/[\r\n]/g, '')}"`);
+    this.arrayEmitter.on("queued-line", () => {
+      Logger.log(`Received: "${this.responseQueue[0].replace(/[\r\n]/g, "")}"`);
     });
   }
 
@@ -54,7 +56,7 @@ export class SerialConnection {
     this.lock();
     await sleep(LINE_DELAY_MS);
     Logger.log(`Writing: "${output}"`);
-    for (const c of output.split('')) {
+    for (const c of output.split("")) {
       this.serialPort.write(c);
       await sleep(CHAR_DELAY_MS);
     }
@@ -62,35 +64,33 @@ export class SerialConnection {
   }
 
   public async waitForResponse(): Promise<string> {
-    return new Promise(async (resolve, reject) => {
-      this.lock();
-      let answered = false;
-      // Return if one is already there
-      if (this.responseQueue.length > 0) {
-        this.unlock();
-        return resolve(this.responseQueue.shift() || '');
-      }
+    this.lock();
+    if (this.responseQueue.length > 0) {
+      this.unlock();
+      return this.responseQueue.shift() || "";
+    }
 
-      // Return line if one is queued
+    return new Promise((resolve, reject) => {
+      let answered = false;
       const onQueued = () => {
         answered = true;
         this.unlock();
-        return resolve(this.responseQueue.shift() || '');
+        resolve(this.responseQueue.shift() || "");
       };
-      this.arrayEmitter.once('queued-line', onQueued);
+      this.arrayEmitter.once("queued-line", onQueued);
 
-      // Reject with a timeout if we hit 60s without
-      for (let i = 0; i < 60; i++) {
-        await sleep(1000);
-        if (answered) {
-          break;
+      void (async () => {
+        // Reject with a timeout if we hit 60s without a response
+        for (let i = 0; i < 60; i++) {
+          await sleep(1000);
+          if (answered) {
+            return;
+          }
         }
-      }
-      if (answered === false) {
-        this.arrayEmitter.removeListener('queued-line', onQueued);
+        this.arrayEmitter.removeListener("queued-line", onQueued);
         this.unlock();
-        reject('Timeout');
-      }
+        reject(new Error("Timeout"));
+      })();
     });
   }
 }

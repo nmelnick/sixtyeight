@@ -68,7 +68,7 @@ export class MenuCard extends Card {
     return item.column ?? 0;
   }
 
-  private rowOf(item: MenuItem, index: number): number {
+  private rowOf(item: MenuItem): number {
     const columnItems = this.items.filter(
       (i) => this.columnOf(i) === this.columnOf(item),
     );
@@ -78,7 +78,7 @@ export class MenuCard extends Card {
   protected renderContent(buf: Buffer2D): void {
     this.items.forEach((item, index) => {
       const column = this.columnOf(item);
-      const row = this.rowOf(item, index);
+      const row = this.rowOf(item);
       const dx = column === 0 ? 3 : this.secondColumnX;
       const dy = FIRST_ITEM_Y + row * ITEM_SPACING;
       const enabled = this.isEnabled(item);
@@ -176,11 +176,11 @@ export class MenuCard extends Card {
       return;
     }
     const currentColumn = this.columnOf(current);
-    const currentRow = this.rowOf(current, this.selectedIndex);
+    const currentRow = this.rowOf(current);
     const targetColumn = ((currentColumn + dCol + 2) % 2) as 0 | 1;
 
     const candidates = this.items
-      .map((item, index) => ({ item, index, row: this.rowOf(item, index) }))
+      .map((item, index) => ({ item, index, row: this.rowOf(item) }))
       .filter(({ item }) => this.columnOf(item) === targetColumn)
       .filter(({ item }) => this.isEnabled(item));
 

@@ -1,14 +1,14 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
-const CONFIG_PATH = path.resolve(process.cwd(), 'sixtyeight.config.json');
+const CONFIG_PATH = path.resolve(process.cwd(), "sixtyeight.config.json");
 
 interface ConfigFile {
   serialPort: string;
 }
 
 export class Config {
-  public static serialPort: string = '/dev/ttyUSB0';
+  public static serialPort: string = "/dev/ttyUSB0";
 
   public static exists(): boolean {
     return fs.existsSync(CONFIG_PATH);
@@ -17,7 +17,9 @@ export class Config {
   public static load(): void {
     let parsed: Partial<ConfigFile> | undefined;
     try {
-      parsed = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+      parsed = JSON.parse(
+        fs.readFileSync(CONFIG_PATH, "utf-8"),
+      ) as Partial<ConfigFile>;
     } catch {
       return;
     }
@@ -28,6 +30,10 @@ export class Config {
 
   public static save(): void {
     const data: ConfigFile = { serialPort: Config.serialPort };
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(data, null, 2) + '\n', 'utf-8');
+    fs.writeFileSync(
+      CONFIG_PATH,
+      JSON.stringify(data, null, 2) + "\n",
+      "utf-8",
+    );
   }
 }
