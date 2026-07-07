@@ -15,14 +15,14 @@ export class Tester {
     Logger.log(`Memory size: ${status / 1024}k`);
   }
 
-  public async dataBusTest(
-    startAddress: number,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for API symmetry with mod3RamTest; not forwarded to TechStep yet
-    endAddress: number,
-  ) {
-    await this.techstep.criticalTest.dataBusTest(startAddress);
-    const [status] = await this.techstep.getReturnStatus();
-    Logger.log(`Test result: ${numberToHex(status)}`);
+  public async dataBusTest(startAddress: number, endAddress: number) {
+    const statusList: Record<number, number> = {};
+    for (let address = startAddress; address <= endAddress; address += 8) {
+      await this.techstep.criticalTest.dataBusTest(address);
+      const [status] = await this.techstep.getReturnStatus();
+      Logger.log(`Test result: ${numberToHex(status)}`);
+      statusList[address] = status;
+    }
   }
 
   public async mod3RamTest(startAddress: number, endAddress: number) {

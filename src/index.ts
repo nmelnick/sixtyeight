@@ -97,7 +97,7 @@ async function go() {
       label: "Data Bus Test",
       column: 0,
       onSelect: () =>
-        runCommand("Data Bus Test", () => tester.dataBusTest(0, 1)),
+        runCommand("Data Bus Test", () => tester.dataBusTest(0, 1024 * 64)),
     },
     {
       key: "3",

@@ -5,8 +5,8 @@ import { Logger } from "./logger.js";
 import EventEmitter from "node:events";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const LINE_DELAY_MS = 180;
-const CHAR_DELAY_MS = 8;
+const LINE_DELAY_MS = 160;
+const CHAR_DELAY_MS = 7;
 
 export class SerialConnection {
   private serialPort: SerialPort;
