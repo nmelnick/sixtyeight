@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import readline from "node:readline/promises";
 import { parseArgs } from "./cli.js";
 import { Config } from "./config.js";
@@ -7,6 +8,7 @@ import { NonCriticalTests, TechStep } from "./techstep.js";
 import { Tester } from "./tester.js";
 import { ActivityLog } from "./tui/activity-log.js";
 import { CardStack, type StatusProvider } from "./tui/card-stack.js";
+import { EventLog } from "./tui/event-log.js";
 import { MenuCard, type MenuItem } from "./tui/menu-card.js";
 import { Screen } from "./tui/screen.js";
 
@@ -63,6 +65,8 @@ async function go() {
 
   const activityLog = new ActivityLog(0, 0, 0, 0);
 
+  const eventLog = new EventLog(0, 0, 0, 0);
+
   // eslint-disable-next-line prefer-const -- mainMenu's closures capture cardStack before it exists (circular reference)
   let cardStack: CardStack;
   let busy = false;
@@ -85,6 +89,10 @@ async function go() {
     }
   }
 
+  const filename = `sixtyeight-${new Date().toISOString().replace("T", "_").replace("Z", "")}.log`;
+  const logStream = fs.createWriteStream(filename);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  Logger.onAppend((line) => logStream.write(line + "\n"));
   Logger.log("Connecting...");
   await serial.send("\r\n");
   connected = true;
@@ -110,7 +118,7 @@ async function go() {
       label: "Data Bus Test",
       column: 0,
       onSelect: () =>
-        runCommand("Data Bus Test", () => tester.dataBusTest(0, 1024 * 64)),
+        runCommand("Data Bus Test", () => tester.dataBusTest(0, 1024)),
     },
     {
       key: "3",
@@ -261,7 +269,7 @@ async function go() {
     isBusy,
   });
 
-  cardStack = new CardStack(mainMenu, activityLog, status);
+  cardStack = new CardStack(mainMenu, activityLog, eventLog, status);
 
   const screen = new Screen(cardStack);
   screen.start();

@@ -24,7 +24,7 @@ export class Screen {
     this.cardStack = cardStack;
     this.screen = blessed.screen({
       smartCSR: true,
-      title: "sixtyeight",
+      title: "{bold}sixtyeight{/bold}",
       fullUnicode: true,
     });
     this.canvas = blessed.box({

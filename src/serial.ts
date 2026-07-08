@@ -56,7 +56,7 @@ export class SerialConnection {
     }
     this.lock();
     await sleep(LINE_DELAY_MS);
-    Logger.log(`Writing: "${output}"`);
+    Logger.log(`Writing: "${output.replace(/[\r\n]/g, "")}"`);
     for (const c of output.split("")) {
       this.serialPort.write(c);
       await sleep(CHAR_DELAY_MS);

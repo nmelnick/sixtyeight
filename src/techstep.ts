@@ -208,6 +208,7 @@ export class TechStep {
       testFlags?: TestFlag[],
     ) => {
       await this.startConversation();
+      Logger.log(startAddress + "");
       await this.command(COMMANDS.LoadA0, ...splitNumberTwoBytes(startAddress));
       await this.runCriticalTest(1, numberOfAttempts, testFlags);
       this.stopConversation();

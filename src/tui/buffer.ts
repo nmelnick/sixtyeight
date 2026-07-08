@@ -25,7 +25,7 @@ const TAG_OPEN: Record<Exclude<CellAttr, CellAttr.Normal>, string> = {
   [CellAttr.BorderDim]: "{white-fg}",
   [CellAttr.Header]: "{light-green-fg}",
   [CellAttr.Menu]: "{white-fg}",
-  [CellAttr.Hotkey]: "{yellow-fg}",
+  [CellAttr.Hotkey]: "{bright-yellow-fg}{bold}",
 };
 
 const TAG_CLOSE: Record<Exclude<CellAttr, CellAttr.Normal>, string> = {
@@ -35,7 +35,7 @@ const TAG_CLOSE: Record<Exclude<CellAttr, CellAttr.Normal>, string> = {
   [CellAttr.BorderDim]: "{/white-fg}",
   [CellAttr.Header]: "{/light-green-fg}",
   [CellAttr.Menu]: "{/white-fg}",
-  [CellAttr.Hotkey]: "{/yellow-fg}",
+  [CellAttr.Hotkey]: "{/bold}{/bright-yellow-fg}",
 };
 
 function escapeTags(text: string): string {

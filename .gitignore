@@ -4,3 +4,5 @@ sixtyeight.config.json
 
 vitest.config.js*
 vitest.config.d*
+
+*.log
