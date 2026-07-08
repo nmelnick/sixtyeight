@@ -51,6 +51,7 @@ export class SerialConnection {
 
   public async send(output: string): Promise<void> {
     while (this.locked) {
+      Logger.log("waiting");
       await sleep(10);
     }
     this.lock();

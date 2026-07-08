@@ -3,7 +3,7 @@ import { parseArgs } from "./cli.js";
 import { Config } from "./config.js";
 import { Logger } from "./logger.js";
 import { SerialConnection } from "./serial.js";
-import { TechStep } from "./techstep.js";
+import { NonCriticalTests, TechStep } from "./techstep.js";
 import { Tester } from "./tester.js";
 import { ActivityLog } from "./tui/activity-log.js";
 import { CardStack, type StatusProvider } from "./tui/card-stack.js";
@@ -85,6 +85,19 @@ async function go() {
     }
   }
 
+  Logger.log("Connecting...");
+  await serial.send("\r\n");
+  connected = true;
+  await runCommand("Get Status", async () => {
+    const [statusValue, errorValue] = await ts.getReturnStatus();
+    Logger.log(`Status: ${statusValue}, Error: ${errorValue}`);
+  });
+  await runCommand("Identify Machine", async () => {
+    const banner = await ts.banner();
+    machineIdentity = banner.machineType ?? banner.identifier;
+    Logger.log(`Machine: ${machineIdentity}`);
+  });
+
   const criticalTestItems: MenuItem[] = [
     {
       key: "1",
@@ -145,9 +158,21 @@ async function go() {
       label: "Size Video RAM Test",
       column: 1,
       onSelect: () =>
-        runCommand("Size Video RaM Test", () => tester.sizeVideoRamTest()),
+        runCommand("Size Video RAM Test", () => tester.sizeVideoRamTest()),
     },
   ];
+
+  const nonCriticalTestItems: MenuItem[] = Object.keys(NonCriticalTests).map(
+    (testName, index) => ({
+      key: index.toString(16),
+      label: testName,
+      column: index > Object.keys(NonCriticalTests).length / 2 ? 1 : 0,
+      onSelect: () =>
+        runCommand(testName, () =>
+          tester.nonCriticalTest(NonCriticalTests[testName]),
+        ),
+    }),
+  );
 
   const settingsItems: MenuItem[] = [
     {
@@ -194,7 +219,20 @@ async function go() {
           isBusy,
         }),
     },
-    { key: "4", label: "Non-Critical Tests", enabled: false },
+    {
+      key: "4",
+      label: "Non-Critical Tests",
+      enabled:
+        machineIdentity !== "II or SE/30" &&
+        machineIdentity !== "Plus" &&
+        machineIdentity !== "SE",
+      submenu: () =>
+        new MenuCard("Non-Critical Tests", 0, 0, 60, 6, nonCriticalTestItems, {
+          onPush: (card) => cardStack.push(card),
+          onPop: () => cardStack.pop(),
+          isBusy,
+        }),
+    },
     {
       key: "5",
       label: "Settings",
@@ -227,20 +265,7 @@ async function go() {
 
   const screen = new Screen(cardStack);
   screen.start();
-
-  Logger.log("Connecting...");
-  await serial.send("\r");
-  connected = true;
   screen.render();
-  await runCommand("Get Status", async () => {
-    const [statusValue, errorValue] = await ts.getReturnStatus();
-    Logger.log(`Status: ${statusValue}, Error: ${errorValue}`);
-  });
-  await runCommand("Identify Machine", async () => {
-    const banner = await ts.banner();
-    machineIdentity = banner.machineType ?? banner.identifier;
-    Logger.log(`Machine: ${machineIdentity}`);
-  });
 }
 
 void go();

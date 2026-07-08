@@ -145,7 +145,7 @@ export class CardStack {
       });
     }
 
-    this.activityLog.render(buf);
+    this.activityLog.render(buf, true, false);
 
     buf.writeText(
       0,

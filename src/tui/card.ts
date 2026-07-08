@@ -61,7 +61,7 @@ export abstract class Card {
     // it never actually shows a lower-right angle. Don't connect the upper corners then;
     // fall back to the plain, disconnected tab style.
     const upperLeft = showCornerConnectors ? "┌" : " ";
-    const upperRight = showCornerConnectors ? "┐" : "";
+    const upperRight = showCornerConnectors ? "┐" : " ";
     const topLineUnderscores = Math.max(0, this.width - tabWidth - 1);
 
     buf.writeText(

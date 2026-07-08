@@ -45,7 +45,7 @@ describe("Card chrome", () => {
     const close = "{/white-fg}";
     expect(lines[0]).toBe(` ${open} ____________________${close}`);
     expect(lines[1]).toBe(
-      ` ${open}│ Main Menu          \\______________________________________________________${close}`,
+      ` ${open}│ Main Menu          \\______________________________________________________ ${close}`,
     );
   });
 
@@ -62,7 +62,7 @@ describe("Card chrome", () => {
     const close = "{/bright-white-fg}";
     expect(lines[0]).toBe(` ${open} ____________________${close}`);
     expect(lines[1]).toBe(
-      ` ${open}│ Main Menu          \\______________________________________________________${close}`,
+      ` ${open}│ Main Menu          \\______________________________________________________ ${close}`,
     );
   });
 });

@@ -88,6 +88,42 @@ const MACHINE_TYPES: Record<string, string> = {
   o: "PowerBook 145",
 };
 
+export const NonCriticalTests: Record<string, number> = {
+  "Mapper RAM data test (Portable)": 0x80,
+  "Mapper RAM unique test (Portable)": 0x81,
+  "VRAM data test (Portable)": 0x82,
+  "VRAM address test (Portable)": 0x83,
+  "SCC test 1": 0x84,
+  "SCC test 2": 0x85,
+  "SCC test 3": 0x86,
+  "VIA test": 0x87,
+  "General SCSI test": 0x88,
+  Sound: 0x89,
+  PRAM: 0x8a,
+  RBV: 0x8b,
+  SWIM: 0x8c,
+  FPU: 0x8d,
+  "PGC - Parity Generator/Checker": 0x8e,
+  "FMC - Fitch Memory Controller 1": 0x8f,
+  "FMC - Fitch Memory Controller 2": 0x90,
+  "OSS - IIfx Operating System Support Chip 1": 0x91,
+  "OSS - IIfx Operating System Support Chip 2": 0x92,
+  "RPU - Tests the RAM Parity Unit used in 840av": 0x93,
+  "Egret - Tests the Egret by executing its built in diagnostics": 0x94,
+  "SoundInts - Checks that sound interrupts are working properly": 0x95,
+  "CLUT - Tests the Color Lookup Table (LC, Q700/Q900, LC III)": 0x96,
+  "VRAM - Tests VRAM (V8 controller)": 0x97,
+  "Classic II PWM": 0x98,
+  "Classic II SoundInts": 0x99,
+  "53C96 SCSI": 0x9a,
+  "SONIC ethernet 1": 0x9b,
+  "SONIC ethernet 2": 0x9c,
+  "SONIC ethernet 3": 0x9d,
+  "GSCRegs - Tests Grayscale Chip registers": 0x9e,
+  "PGE - Tests PG&E power manager (PowerBook Duo)": 0x9f,
+  "CSCRegs - Test Color Support Chip registers": 0xa0,
+};
+
 export enum TestFlag {
   STOP_ON_FIRST_FAILURE = 0x12,
   LOOP_ON_FAILURE_FOREVER = 0x13,
@@ -251,6 +287,21 @@ export class TechStep {
       this.stopConversation();
     },
   };
+
+  public async nonCriticalTest(
+    testNumber: number,
+    numberOfAttempts: number = 1,
+  ) {
+    const flags = 1;
+    await this.startConversation();
+    await this.command(
+      COMMANDS.NonCriticalTest,
+      testNumber,
+      numberOfAttempts,
+      flags,
+    );
+    this.stopConversation();
+  }
 
   private async runCriticalTest(
     testNumber: number,

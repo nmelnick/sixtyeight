@@ -66,4 +66,11 @@ export class Tester {
     const [status] = await this.techstep.getReturnStatus();
     Logger.log(`Test result: ${numberToHex(status)}`);
   }
+
+  public async nonCriticalTest(testNumber: number) {
+    await this.techstep.nonCriticalTest(testNumber);
+    Logger.log("hm");
+    const [status] = await this.techstep.getReturnStatus();
+    Logger.log(`Test result: ${numberToHex(status)}`);
+  }
 }
