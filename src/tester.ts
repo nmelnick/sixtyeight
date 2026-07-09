@@ -29,13 +29,24 @@ export class Tester {
   }
 
   public async dataBusTest(startAddress: number, endAddress: number) {
-    const statusList: Record<number, number> = {};
+    const statusList: Map<number, number> = new Map();
     for (let address = startAddress; address <= endAddress; address += 8) {
       await this.techstep.criticalTest.dataBusTest(address);
       const [status] = await this.techstep.getReturnStatus();
       Logger.log(`Test result: ${numberToHex(status)}`);
-      statusList[address] = status;
+      statusList.set(address, status);
     }
+    let err = 0;
+    for (const k of statusList.keys()) {
+      if (statusList.has(k) && (statusList.get(k) as number) > 0) {
+        err = statusList.get(k) as number;
+      }
+    }
+    Eventer.submit({
+      name: "DataBusTest",
+      status: err ? "Failure" : "Success",
+      result: numberToHex(err, 8),
+    });
   }
 
   public async mod3RamTest(startAddress: number, endAddress: number) {
@@ -82,7 +93,6 @@ export class Tester {
 
   public async nonCriticalTest(testNumber: number) {
     await this.techstep.nonCriticalTest(testNumber);
-    Logger.log("hm");
     const [status] = await this.techstep.getReturnStatus();
     Logger.log(`Test result: ${numberToHex(status)}`);
   }
