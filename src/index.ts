@@ -12,7 +12,7 @@ import { EventLog } from "./tui/event-log.js";
 import { MenuCard, type MenuItem } from "./tui/menu-card.js";
 import { Screen } from "./tui/screen.js";
 import { Eventer } from "./eventer.js";
-import { numberToHex } from "./convert.js";
+import { hexToNumber, numberToHex } from "./convert.js";
 
 async function promptForSerialPort(): Promise<string> {
   const rl = readline.createInterface({
@@ -91,6 +91,60 @@ async function go() {
     }
   }
 
+  function createAddressRangeMenu(
+    title: string,
+    runLabel: string,
+    defaultStart: number,
+    defaultEnd: number,
+    run: (start: number, end: number) => Promise<void>,
+  ): MenuCard {
+    let start = defaultStart;
+    let end = defaultEnd;
+
+    const items: MenuItem[] = [
+      {
+        key: "S",
+        label: "Start Address",
+        column: 0,
+        field: {
+          getValue: () => numberToHex(start, 8),
+          onSubmit: (value) => {
+            const parsed = hexToNumber(value);
+            if (!Number.isNaN(parsed)) {
+              start = parsed;
+            }
+          },
+        },
+      },
+      {
+        key: "E",
+        label: "End Address",
+        column: 0,
+        field: {
+          getValue: () => numberToHex(end, 8),
+          onSubmit: (value) => {
+            const parsed = hexToNumber(value);
+            if (!Number.isNaN(parsed)) {
+              end = parsed;
+            }
+          },
+        },
+      },
+      {
+        key: "R",
+        label: "Run",
+        column: 0,
+        onSelect: () => runCommand(runLabel, () => run(start, end)),
+      },
+    ];
+
+    return new MenuCard(title, 0, 0, 60, 8, items, {
+      onPush: (card) => cardStack.push(card),
+      onPop: () => cardStack.pop(),
+      isBusy,
+    });
+  }
+
   const filename = `sixtyeight-${new Date().toISOString().replace("T", "_").replace("Z", "")}.log`;
   const logStream = fs.createWriteStream(filename);
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -119,15 +173,27 @@ async function go() {
       key: "2",
       label: "Data Bus Test",
       column: 0,
-      onSelect: () =>
-        runCommand("Data Bus Test", () => tester.dataBusTest(0, 1024)),
+      submenu: () =>
+        createAddressRangeMenu(
+          "Data Bus Test",
+          "Data Bus Test",
+          0,
+          1024,
+          (start, end) => tester.dataBusTest(start, end),
+        ),
     },
     {
       key: "3",
       label: "Mod3 RAM Test",
       column: 0,
-      onSelect: () =>
-        runCommand("Mod3 RAM Test", () => tester.mod3RamTest(0, 8388608)),
+      submenu: () =>
+        createAddressRangeMenu(
+          "Mod3 RAM Test",
+          "Mod3 RAM Test",
+          0,
+          8388608,
+          (start, end) => tester.mod3RamTest(start, end),
+        ),
     },
     {
       key: "4",
@@ -146,22 +212,40 @@ async function go() {
       key: "6",
       label: "RevMod3 RAM Test",
       column: 0,
-      onSelect: () =>
-        runCommand("RevMod3 RAM Test", () => tester.revMod3Test(0, 8388608)),
+      submenu: () =>
+        createAddressRangeMenu(
+          "RevMod3 RAM Test",
+          "RevMod3 RAM Test",
+          0,
+          8388608,
+          (start, end) => tester.revMod3Test(start, end),
+        ),
     },
     {
       key: "7",
       label: "Extra RAM Test/March Test",
       column: 1,
-      onSelect: () =>
-        runCommand("Extra RAM Test", () => tester.extraRamTest(0, 8388608)),
+      submenu: () =>
+        createAddressRangeMenu(
+          "Extra RAM Test",
+          "Extra RAM Test",
+          0,
+          8388608,
+          (start, end) => tester.extraRamTest(start, end),
+        ),
     },
     {
       key: "8",
       label: "ModInv RAM Test",
       column: 1,
-      onSelect: () =>
-        runCommand("ModInv RAM Test", () => tester.modInvramTest(0, 8388608)),
+      submenu: () =>
+        createAddressRangeMenu(
+          "ModInv RAM Test",
+          "ModInv RAM Test",
+          0,
+          8388608,
+          (start, end) => tester.modInvramTest(start, end),
+        ),
     },
     {
       key: "9",

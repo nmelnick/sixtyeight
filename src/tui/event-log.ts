@@ -13,7 +13,7 @@ export class EventLog extends LogCard {
       return {
         text: `${prefix} ${event.name} = ${event.result}`,
         attr: event.status === "Success" ? CellAttr.Success : CellAttr.Error,
-      }
+      };
     });
   }
 }

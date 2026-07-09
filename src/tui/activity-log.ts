@@ -1,5 +1,4 @@
 import { Logger } from "../logger.js";
-import { Buffer2D } from "./buffer.js";
 import { LogCard, type LogLine } from "./log-card.js";
 
 export class ActivityLog extends LogCard {
