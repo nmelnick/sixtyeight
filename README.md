@@ -1,6 +1,6 @@
 # sixtyeight
 
-A text based user interface to the Apple TechStep serial diagnostics, as
+A text based user interface to the 68K Macintosh serial diagnostics, as
 documented by Rob Braun and Adrian Black.
 
 https://docs.google.com/spreadsheets/d/1zsc7ET5fyiOYWj1_AzOgafbrCVFED-7jzLH6ruCiAVE/edit?usp=sharing
