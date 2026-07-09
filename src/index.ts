@@ -11,6 +11,8 @@ import { CardStack, type StatusProvider } from "./tui/card-stack.js";
 import { EventLog } from "./tui/event-log.js";
 import { MenuCard, type MenuItem } from "./tui/menu-card.js";
 import { Screen } from "./tui/screen.js";
+import { Eventer } from "./eventer.js";
+import { numberToHex } from "./convert.js";
 
 async function promptForSerialPort(): Promise<string> {
   const rl = readline.createInterface({
@@ -197,6 +199,8 @@ async function go() {
     },
   ];
 
+  const utilityItems: MenuItem[] = [];
+
   const mainMenuItems: MenuItem[] = [
     {
       key: "1",
@@ -209,16 +213,6 @@ async function go() {
     },
     {
       key: "2",
-      label: "Identify Machine",
-      onSelect: () =>
-        runCommand("Identify Machine", async () => {
-          const banner = await ts.banner();
-          machineIdentity = banner.machineType ?? banner.identifier;
-          Logger.log(`Machine: ${machineIdentity}`);
-        }),
-    },
-    {
-      key: "3",
       label: "Critical Tests",
       submenu: () =>
         new MenuCard("Critical Tests", 0, 0, 76, 14, criticalTestItems, {
@@ -228,7 +222,7 @@ async function go() {
         }),
     },
     {
-      key: "4",
+      key: "3",
       label: "Non-Critical Tests",
       enabled:
         machineIdentity !== "II or SE/30" &&
@@ -236,6 +230,16 @@ async function go() {
         machineIdentity !== "SE",
       submenu: () =>
         new MenuCard("Non-Critical Tests", 0, 0, 60, 6, nonCriticalTestItems, {
+          onPush: (card) => cardStack.push(card),
+          onPop: () => cardStack.pop(),
+          isBusy,
+        }),
+    },
+    {
+      key: "4",
+      label: "Utilities",
+      submenu: () =>
+        new MenuCard("Utilities", 0, 0, 60, 6, utilityItems, {
           onPush: (card) => cardStack.push(card),
           onPop: () => cardStack.pop(),
           isBusy,
@@ -259,6 +263,11 @@ async function go() {
           await ts.clearResult();
           const [statusValue, errorValue] = await ts.getReturnStatus();
           Logger.log(`Status: ${statusValue}, Error: ${errorValue}`);
+          Eventer.submit({
+            name: "Clear Result",
+            result: numberToHex(statusValue, 8),
+            status: "Success",
+          });
         }),
     },
   ];

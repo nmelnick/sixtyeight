@@ -15,13 +15,13 @@ export class Tester {
       await this.techstep.criticalTest.sizeMemory();
       const [status] = await this.techstep.getReturnStatus();
       Eventer.submit({
-        name: "SizeMemory",
+        name: "Size Memory",
         status: "Success",
         result: `Memory size: ${status / 1024}k`,
       });
     } catch (e: unknown) {
       Eventer.submit({
-        name: "SizeMemory",
+        name: "Size Memory",
         status: "Failure",
         result: Error.isError(e) ? e.message : "",
       });
@@ -43,7 +43,7 @@ export class Tester {
       }
     }
     Eventer.submit({
-      name: "DataBusTest",
+      name: "Data Bus Test",
       status: err ? "Failure" : "Success",
       result: numberToHex(err, 8),
     });
@@ -54,13 +54,13 @@ export class Tester {
       await this.techstep.criticalTest.mod3RamTest(startAddress, endAddress);
       const [status] = await this.techstep.getReturnStatus();
       Eventer.submit({
-        name: "Mod3MemoryTest",
+        name: "Mod3 RAM Test",
         status: "Success",
         result: `Test result: ${numberToHex(status)}`,
       });
     } catch (e: unknown) {
       Eventer.submit({
-        name: "Mod3MemoryTest",
+        name: "Mod3 RAM Test",
         status: "Failure",
         result: Error.isError(e) ? e.message : "",
       });
@@ -72,13 +72,13 @@ export class Tester {
       await this.techstep.criticalTest.addressLineTest(memorySize);
       const [status] = await this.techstep.getReturnStatus();
       Eventer.submit({
-        name: "AddressLineTest",
+        name: "Address Line Test",
         status: "Success",
         result: `Test result: ${numberToHex(status)}`,
       });
     } catch (e: unknown) {
       Eventer.submit({
-        name: "AddressLineTest",
+        name: "Address Line Test",
         status: "Failure",
         result: Error.isError(e) ? e.message : "",
       });
@@ -90,13 +90,13 @@ export class Tester {
       await this.techstep.criticalTest.romChecksum();
       const [status] = await this.techstep.getReturnStatus();
       Eventer.submit({
-        name: "RomChecksum",
+        name: "Rom Checksum",
         status: "Success",
         result: `Test result: ${numberToHex(status)}`,
       });
     } catch (e: unknown) {
       Eventer.submit({
-        name: "RomChecksum",
+        name: "Rom Checksum",
         status: "Failure",
         result: Error.isError(e) ? e.message : "",
       });
@@ -108,13 +108,13 @@ export class Tester {
       await this.techstep.criticalTest.revMod3Test(startAddress, endAddress);
       const [status] = await this.techstep.getReturnStatus();
       Eventer.submit({
-        name: "RevMod3MemoryTest",
+        name: "RevMod3 RAM Test",
         status: "Success",
         result: `Test result: ${numberToHex(status)}`,
       });
     } catch (e: unknown) {
       Eventer.submit({
-        name: "RevMod3MemoryTest",
+        name: "RevMod3 RAM Test",
         status: "Failure",
         result: Error.isError(e) ? e.message : "",
       });
@@ -126,13 +126,13 @@ export class Tester {
       await this.techstep.criticalTest.extraRamTest(startAddress, endAddress);
       const [status] = await this.techstep.getReturnStatus();
       Eventer.submit({
-        name: "ExtraRamTest",
+        name: "Extra Ram Test",
         status: "Success",
         result: `Test result: ${numberToHex(status)}`,
       });
     } catch (e: unknown) {
       Eventer.submit({
-        name: "ExtraRamTest",
+        name: "Extra Ram Test",
         status: "Failure",
         result: Error.isError(e) ? e.message : "",
       });
@@ -144,13 +144,13 @@ export class Tester {
       await this.techstep.criticalTest.modInvramTest(startAddress, endAddress);
       const [status] = await this.techstep.getReturnStatus();
       Eventer.submit({
-        name: "ModInvRamTest",
+        name: "ModInv RAM Test",
         status: "Success",
         result: `Test result: ${numberToHex(status)}`,
       });
     } catch (e: unknown) {
       Eventer.submit({
-        name: "ModInvRamTest",
+        name: "ModInv RAM Test",
         status: "Failure",
         result: Error.isError(e) ? e.message : "",
       });
@@ -162,13 +162,13 @@ export class Tester {
       await this.techstep.criticalTest.sizeVideoRamTest();
       const [status] = await this.techstep.getReturnStatus();
       Eventer.submit({
-        name: "SizeVideoRamTest",
+        name: "Size Video RAM Test",
         status: "Success",
         result: `Test result: ${numberToHex(status)}`,
       });
     } catch (e: unknown) {
       Eventer.submit({
-        name: "SizeVideoRamTest",
+        name: "Size Video RAM Test",
         status: "Failure",
         result: Error.isError(e) ? e.message : "",
       });
@@ -183,13 +183,13 @@ export class Tester {
       await this.techstep.nonCriticalTest(testNumber);
       const [status] = await this.techstep.getReturnStatus();
       Eventer.submit({
-        name: `NonCriticalTest ${nonCriticalTestTitle}`,
+        name: `Non-CriticalTests/${nonCriticalTestTitle}`,
         status: "Success",
         result: `Test result: ${numberToHex(status)}`,
       });
     } catch (e: unknown) {
       Eventer.submit({
-        name: `NonCriticalTest ${nonCriticalTestTitle}`,
+        name: `Non-CriticalTests/${nonCriticalTestTitle}`,
         status: "Failure",
         result: Error.isError(e) ? e.message : "",
       });
