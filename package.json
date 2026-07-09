@@ -7,6 +7,9 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": "dist/index.js",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "start": "tsc && node dist/index.js",

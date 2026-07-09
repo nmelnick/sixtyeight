@@ -1,0 +1,48 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [24, 26]
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        id: setup-node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install Dependencies
+        id: npm-ci
+        run: npm ci
+
+      - name: Lint
+        id: npm-lint
+        run: npm run lint
+
+      - name: Test
+        id: npm-test
+        run: npm test
+
+      - name: Build
+        id: npm-build
+        run: npm run build
