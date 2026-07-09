@@ -1,4 +1,5 @@
 import { numberToHex } from "./convert.js";
+import { Eventer } from "./eventer.js";
 import { Logger } from "./logger.js";
 import { TechStep } from "./techstep.js";
 
@@ -10,9 +11,21 @@ export class Tester {
   }
 
   public async sizeMemory() {
-    await this.techstep.criticalTest.sizeMemory();
-    const [status] = await this.techstep.getReturnStatus();
-    Logger.log(`Memory size: ${status / 1024}k`);
+    try {
+      await this.techstep.criticalTest.sizeMemory();
+      const [status] = await this.techstep.getReturnStatus();
+      Eventer.submit({
+        name: "SizeMemory",
+        status: "Success",
+        result: `Memory size: ${status / 1024}k`,
+      });
+    } catch (e: unknown) {
+      Eventer.submit({
+        name: "SizeMemory",
+        status: "Failure",
+        result: Error.isError(e) ? e.message : "",
+      });
+    }
   }
 
   public async dataBusTest(startAddress: number, endAddress: number) {

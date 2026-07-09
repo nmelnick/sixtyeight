@@ -1,6 +1,7 @@
 import blessed from "blessed";
 import { CardStack } from "./card-stack.js";
 import { Logger } from "../logger.js";
+import { Eventer } from "../eventer.js";
 
 const KEY_NAME_MAP: Record<string, string> = {
   up: "up",
@@ -47,6 +48,7 @@ export class Screen {
       },
     );
     Logger.onAppend(() => this.render());
+    Eventer.onAppend(() => this.render());
   }
 
   private onKey(ch: string, key: blessed.Widgets.Events.IKeyEventArg): void {

@@ -1,3 +1,4 @@
+import { Eventer } from "../eventer.js";
 import { LogCard } from "./log-card.js";
 
 export class EventLog extends LogCard {
@@ -6,6 +7,8 @@ export class EventLog extends LogCard {
   }
 
   protected getBufferSource(): readonly string[] {
-    return [];
+    return Eventer.getEvents().map((event) => {
+      return `${event.status}: ${event.name} = ${event.result}`;
+    });
   }
 }
