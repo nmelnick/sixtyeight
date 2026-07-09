@@ -4,13 +4,15 @@
   "description": "A text based user interface to the Apple TechStep serial diagnostics",
   "author": "Nick Melnick <nrmelnick@gmail.com>",
   "type": "module",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "bin": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "start": "tsc && node dist/index.js",
     "test": "vitest run",
     "lint": "eslint src",
-    "lint:fix": "eslint src --fix"
+    "lint:fix": "eslint src --fix",
+    "pkg": "node node_modules/.bin/pkg ."
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
@@ -31,5 +33,15 @@
     "@serialport/bindings-interface": "^1.2.2",
     "blessed": "^0.1.81",
     "serialport": "^13.0.0"
+  },
+  "pkg": {
+    "scripts": "dist/**/*.js",
+    "assets": [
+      "node_modules/@serialport/bindings-cpp/prebuilds"
+    ],
+    "targets": [
+      "node24-linux-x64"
+    ],
+    "outputPath": "pkg"
   }
 }
