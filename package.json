@@ -1,9 +1,8 @@
 {
   "name": "sixtyeight",
   "version": "1.0.0",
-  "description": "",
-  "license": "ISC",
-  "author": "",
+  "description": "A text based user interface to the Apple TechStep serial diagnostics",
+  "author": "Nick Melnick <nrmelnick@gmail.com>",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -18,6 +17,7 @@
     "@eslint/js": "^10.0.1",
     "@types/blessed": "^0.1.27",
     "@types/node": "^26.1.0",
+    "@yao-pkg/pkg": "^6.21.0",
     "eslint": "^10",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.6",

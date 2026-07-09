@@ -147,7 +147,7 @@ async function go() {
 
   const filename = `sixtyeight-${new Date().toISOString().replace("T", "_").replace("Z", "")}.log`;
   const logStream = fs.createWriteStream(filename);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
   Logger.onAppend((line) => logStream.write(line + "\n"));
   Logger.log("Connecting...");
   await serial.send("\r\n");
