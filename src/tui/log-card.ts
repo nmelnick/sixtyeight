@@ -1,5 +1,10 @@
-import { Buffer2D } from "./buffer.js";
+import { Buffer2D, CellAttr } from "./buffer.js";
 import { Card } from "./card.js";
+
+export interface LogLine {
+  text: string;
+  attr?: CellAttr;
+}
 
 export class LogCard extends Card {
   private scrollOffset: number = 0;
@@ -14,7 +19,7 @@ export class LogCard extends Card {
     super(title, x, y, width, height);
   }
 
-  protected getBufferSource(): readonly string[] {
+  protected getBufferSource(): readonly LogLine[] {
     return [];
   }
 
@@ -49,8 +54,10 @@ export class LogCard extends Card {
 
     visible.forEach((line, i) => {
       const clipped =
-        line.length > innerWidth ? line.slice(0, innerWidth) : line;
-      this.writeRelative(buf, 2, 2 + i, clipped);
+        line.text.length > innerWidth
+          ? line.text.slice(0, innerWidth)
+          : line.text;
+      this.writeRelative(buf, 2, 2 + i, clipped, line.attr);
     });
   }
 

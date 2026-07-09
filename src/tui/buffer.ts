@@ -12,6 +12,10 @@ export enum CellAttr {
   Menu = "menu",
   /** Yellow — the number/letter hotkey prefix on a menu item. */
   Hotkey = "hotkey",
+  /** Light green — successful log entries. */
+  Success = "success",
+  /** Light red — failed log entries. */
+  Error = "error",
 }
 
 // blessed's tag parser only recognizes a fixed set of style/color names (see
@@ -26,6 +30,8 @@ const TAG_OPEN: Record<Exclude<CellAttr, CellAttr.Normal>, string> = {
   [CellAttr.Header]: "{light-green-fg}",
   [CellAttr.Menu]: "{white-fg}",
   [CellAttr.Hotkey]: "{bright-yellow-fg}{bold}",
+  [CellAttr.Success]: "{light-green-fg}",
+  [CellAttr.Error]: "{light-red-fg}",
 };
 
 const TAG_CLOSE: Record<Exclude<CellAttr, CellAttr.Normal>, string> = {
@@ -36,6 +42,8 @@ const TAG_CLOSE: Record<Exclude<CellAttr, CellAttr.Normal>, string> = {
   [CellAttr.Header]: "{/light-green-fg}",
   [CellAttr.Menu]: "{/white-fg}",
   [CellAttr.Hotkey]: "{/bold}{/bright-yellow-fg}",
+  [CellAttr.Success]: "{/light-green-fg}",
+  [CellAttr.Error]: "{/light-red-fg}",
 };
 
 function escapeTags(text: string): string {
