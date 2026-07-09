@@ -1,6 +1,7 @@
 {
   "name": "sixtyeight",
   "version": "1.0.0",
+  "license": "MIT",
   "description": "A text based user interface to the 68K Macintosh serial diagnostics",
   "author": "Nick Melnick <nrmelnick@gmail.com>",
   "type": "module",
