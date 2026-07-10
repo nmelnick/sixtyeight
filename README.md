@@ -1,5 +1,7 @@
 # sixtyeight
 
+![Screenshot of the initial sixtyeight interface](./doc/images/screenshot-0.0.3.png)
+
 A text based user interface to the 68K Macintosh serial diagnostics, as
 documented by Rob Braun and Adrian Black.
 
