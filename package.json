@@ -13,6 +13,7 @@
   "scripts": {
     "build": "tsc",
     "start": "tsc && node dist/index.js",
+    "version:sync": "node scripts/sync-version.mjs",
     "test": "vitest run",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",

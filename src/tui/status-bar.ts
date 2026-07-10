@@ -1,4 +1,5 @@
 import { numberToHex } from "../convert.js";
+import { VERSION } from "../version.js";
 
 function padBetween(left: string, right: string, width: number): string {
   const gap = Math.max(1, width - left.length - right.length);
@@ -19,7 +20,7 @@ export function topBar(
   machineIdentity?: string,
 ): string {
   const left =
-    " sixtyeight 1.0.0" +
+    ` sixtyeight ${VERSION}` +
     (machineIdentity ? ` - Macintosh ${machineIdentity}` : "");
   const right = `[S] ${connected ? "Connected" : "Disconnected"} - ${port}`;
   return padBetween(left, right, width);
