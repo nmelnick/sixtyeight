@@ -27,10 +27,14 @@ jobs:
         run: |
           npm ci
           npm run build
+          npm prune --omit=dev
           npm run pkg
 
       - name: Compress Release Artifacts
-        run: gzip -c pkg/sixtyeight > pkg/sixtyeight-linux-amd64.gz
+        run: |
+          cd pkg
+          gzip -c sixtyeight-linux > sixtyeight-linux-amd64.gz
+          zip sixtyeight-win.zip sixtyeight-win.exe
 
       - name: Generate Draft GitHub Release
         id: create_release
