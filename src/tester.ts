@@ -176,9 +176,12 @@ export class Tester {
   }
 
   public async nonCriticalTest(testNumber: number) {
-    const nonCriticalTestTitle = Object.entries(NonCriticalTests).filter(
-      (k, v) => v === testNumber,
-    )[0][0];
+    const nonCriticalTestPair = Object.entries(NonCriticalTests).find(
+      (_k, v) => v === testNumber,
+    );
+    const nonCriticalTestTitle = nonCriticalTestPair
+      ? nonCriticalTestPair[0][0]
+      : "";
     try {
       await this.techstep.nonCriticalTest(testNumber);
       const [status] = await this.techstep.getReturnStatus();
