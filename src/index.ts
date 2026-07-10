@@ -252,7 +252,7 @@ async function go() {
     });
   }
 
-  const filename = `sixtyeight-${new Date().toISOString().replace("T", "_").replace("Z", "")}.log`;
+  const filename = `sixtyeight-${new Date().toISOString().replace("T", "_").replace("Z", "").replace(":", "-")}.log`;
   const logStream = fs.createWriteStream(filename);
 
   Logger.onAppend((line) => logStream.write(line + "\n"));
