@@ -25,7 +25,7 @@ export class Screen {
     this.cardStack = cardStack;
     this.screen = blessed.screen({
       smartCSR: true,
-      title: "{bold}sixtyeight{/bold}",
+      title: "sixtyeight",
       fullUnicode: true,
     });
     this.canvas = blessed.box({
@@ -52,6 +52,10 @@ export class Screen {
   }
 
   private onKey(ch: string, key: blessed.Widgets.Events.IKeyEventArg): void {
+    // blessed's Program re-emits every raw "\r" keypress a second time
+    if (key.name === "enter" && key.sequence === "\r") {
+      return;
+    }
     const name = key.name ? (KEY_NAME_MAP[key.name] ?? key.name) : ch;
     if (!name) {
       return;

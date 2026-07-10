@@ -10,9 +10,20 @@ import { ActivityLog } from "./tui/activity-log.js";
 import { CardStack, type StatusProvider } from "./tui/card-stack.js";
 import { EventLog } from "./tui/event-log.js";
 import { MenuCard, type MenuItem } from "./tui/menu-card.js";
+import { MonitorCard } from "./tui/monitor-card.js";
 import { Screen } from "./tui/screen.js";
 import { Eventer } from "./eventer.js";
 import { hexToNumber, numberToHex } from "./convert.js";
+
+process.on("unhandledRejection", (reason) => {
+  Logger.error(
+    `Unhandled rejection: ${reason instanceof Error ? reason.message : String(reason)}`,
+  );
+});
+
+process.on("uncaughtException", (error) => {
+  Logger.error(`Uncaught exception: ${error.message}`);
+});
 
 async function promptForSerialPort(): Promise<string> {
   const rl = readline.createInterface({
@@ -139,6 +150,102 @@ async function go() {
     ];
 
     return new MenuCard(title, 0, 0, 60, 8, items, {
+      onPush: (card) => cardStack.push(card),
+      onPop: () => cardStack.pop(),
+      isBusy,
+    });
+  }
+
+  const MAX_MONITOR_ADDRESSES = 16;
+  const MONITOR_ADDRESS_MAX_LENGTH = 8;
+
+  function addressesInRange(
+    start: number,
+    end: number,
+    maxCount: number,
+  ): number[] {
+    const span = end - start;
+    if (span < 0) {
+      return [];
+    }
+    const total = span + 1;
+    if (total <= maxCount) {
+      return Array.from({ length: total }, (_, i) => start + i);
+    }
+    const step = span / (maxCount - 1);
+    const addresses = new Set<number>();
+    for (let i = 0; i < maxCount; i++) {
+      addresses.add(Math.round(start + step * i));
+    }
+    return [...addresses].sort((a, b) => a - b);
+  }
+
+  function createMemoryMonitorConfig(): MenuCard {
+    let start = 0;
+    let end = 0;
+    let intervalSeconds = 30;
+
+    const items: MenuItem[] = [
+      {
+        key: "S",
+        label: "Start Address",
+        column: 0,
+        field: {
+          getValue: () => numberToHex(start, 8),
+          maxLength: MONITOR_ADDRESS_MAX_LENGTH,
+          onSubmit: (value) => {
+            const parsed = hexToNumber(value);
+            if (!Number.isNaN(parsed)) {
+              start = parsed;
+            }
+          },
+        },
+      },
+      {
+        key: "E",
+        label: "End Address",
+        column: 0,
+        field: {
+          getValue: () => numberToHex(end, 8),
+          maxLength: MONITOR_ADDRESS_MAX_LENGTH,
+          onSubmit: (value) => {
+            const parsed = hexToNumber(value);
+            if (!Number.isNaN(parsed)) {
+              end = parsed;
+            }
+          },
+        },
+      },
+      {
+        key: "I",
+        label: "Interval (seconds)",
+        column: 0,
+        field: {
+          getValue: () => String(intervalSeconds),
+          onSubmit: (value) => {
+            const parsed = parseInt(value, 10);
+            if (!Number.isNaN(parsed) && parsed > 0) {
+              intervalSeconds = parsed;
+            }
+          },
+        },
+      },
+      {
+        key: "R",
+        label: "Start",
+        column: 0,
+        onSelect: () => {
+          const addresses = addressesInRange(start, end, MAX_MONITOR_ADDRESSES);
+          cardStack.push(
+            new MonitorCard(addresses, intervalSeconds, ts, () =>
+              cardStack.pop(),
+            ),
+          );
+        },
+      },
+    ];
+
+    return new MenuCard("Memory Monitor", 0, 0, 60, 8, items, {
       onPush: (card) => cardStack.push(card),
       onPop: () => cardStack.pop(),
       isBusy,
@@ -283,7 +390,13 @@ async function go() {
     },
   ];
 
-  const utilityItems: MenuItem[] = [];
+  const utilityItems: MenuItem[] = [
+    {
+      key: "1",
+      label: "Memory Monitor",
+      submenu: () => createMemoryMonitorConfig(),
+    },
+  ];
 
   const mainMenuItems: MenuItem[] = [
     {

@@ -48,6 +48,7 @@ const COMMANDS: Record<string, TechStepCommand> = {
   ByteCount: "B",
   GetData: "D",
   CheckSum: "C",
+  MemDump: "M",
 
   LoadA0: "0",
   LoadA1: "1",
@@ -191,6 +192,27 @@ export class TechStep {
     await this.startConversation();
     await this.command(COMMANDS.ClearResult);
     this.stopConversation();
+  }
+
+  public async readMemory(
+    address: number,
+    byteCount: number = 1,
+  ): Promise<number[]> {
+    await this.startConversation();
+    await this.command(COMMANDS.LoadData, ...splitNumberTwoBytes(address));
+    await this.command(COMMANDS.ByteCount, byteCount);
+    const result = (await this.command(COMMANDS.MemDump)) || "";
+    this.stopConversation();
+    const bytes =
+      result
+        .substring(2)
+        .substring(0, 2 * byteCount)
+        .match(/.{2}/g)
+        ?.map(hexToNumber) ?? [];
+    if (bytes.length !== byteCount || bytes.some((b) => Number.isNaN(b))) {
+      throw new Error(`Unexpected memory dump response: "${result}"`);
+    }
+    return bytes;
   }
 
   public criticalTest = {
@@ -385,6 +407,9 @@ export class TechStep {
     } else if (waitFor && result.indexOf("ERROR") > -1) {
       this.stopConversation();
       throw new Error(result);
+    } else if (waitFor && waitFor === "*M") {
+      const nextResult = await this.serial.waitForResponse(result);
+      return nextResult;
     }
     return result;
   }
