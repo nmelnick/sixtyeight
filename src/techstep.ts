@@ -1,5 +1,6 @@
 import { hexToNumber, numberToHex, splitNumberTwoBytes } from "./convert.js";
 import { Logger } from "./logger.js";
+import { MACHINE_TYPES } from "./machine-types.js";
 import type { SerialConnection } from "./serial.js";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -57,36 +58,6 @@ const COMMANDS: Record<string, TechStepCommand> = {
 
   StartBootMsg: "5",
   StopBanner: "S",
-};
-
-const MACHINE_TYPES: Record<string, string> = {
-  "1": "II or SE/30",
-  "2": "SE",
-  "3": "Plus",
-  "6": "Portable",
-  "7": "IIci",
-  "8": "IIfx",
-  A: "IIci",
-  B: "Classic",
-  C: "IIsi",
-  D: "LC",
-  E: "Quadra 900",
-  H: "PowerBook 170",
-  I: "Quadra 700",
-  J: "Classic II",
-  L: "PowerBook 140",
-  M: "Quadra 950",
-  N: "LC III",
-  O: "IIvx/IIvi",
-  Q: "Centris 650",
-  R: "Color Classic",
-  T: "PowerBook 180",
-  X: "LC II",
-  e: "IIvi",
-  f: "IIvx",
-  j: "Color Classic",
-  k: "PowerBook 165c",
-  o: "PowerBook 145",
 };
 
 export const NonCriticalTests: Record<string, number> = {

@@ -5,10 +5,12 @@ const CONFIG_PATH = path.resolve(process.cwd(), "sixtyeight.config.json");
 
 interface ConfigFile {
   serialPort: string;
+  ignoreCapabilityDimming: boolean;
 }
 
 export class Config {
   public static serialPort: string = "/dev/ttyUSB0";
+  public static ignoreCapabilityDimming: boolean = false;
 
   public static exists(): boolean {
     return fs.existsSync(CONFIG_PATH);
@@ -26,10 +28,16 @@ export class Config {
     if (parsed?.serialPort) {
       Config.serialPort = parsed.serialPort;
     }
+    if (parsed?.ignoreCapabilityDimming !== undefined) {
+      Config.ignoreCapabilityDimming = parsed.ignoreCapabilityDimming;
+    }
   }
 
   public static save(): void {
-    const data: ConfigFile = { serialPort: Config.serialPort };
+    const data: ConfigFile = {
+      serialPort: Config.serialPort,
+      ignoreCapabilityDimming: Config.ignoreCapabilityDimming,
+    };
     fs.writeFileSync(
       CONFIG_PATH,
       JSON.stringify(data, null, 2) + "\n",
