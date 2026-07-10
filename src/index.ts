@@ -421,10 +421,10 @@ async function go() {
     {
       key: "3",
       label: "Non-Critical Tests",
-      // enabled:
-      //   machineIdentity !== "II or SE/30" &&
-      //   machineIdentity !== "Plus" &&
-      //   machineIdentity !== "SE",
+      enabled:
+        machineIdentity !== "II or SE/30" &&
+        machineIdentity !== "Plus" &&
+        machineIdentity !== "SE",
       submenu: () =>
         new MenuCard("Non-Critical Tests", 0, 0, 74, 6, nonCriticalTestItems, {
           onPush: (card) => cardStack.push(card),
