@@ -24,9 +24,13 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies & Build Binaries
+        env:
+          TAG_NAME: ${{ github.ref_name }}
         run: |
           npm install -g @yao-pkg/pkg
           npm ci
+          npm pkg set version="${TAG_NAME#v}"
+          npm run version:sync
           npm run build
           npm prune --omit=dev
           npm run pkg
