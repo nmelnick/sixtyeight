@@ -64,9 +64,10 @@ export class CardStack {
   }
 
   public handleKey(key: string): void {
-    if (this.activityLogExpanded) {
+    if (this.activityLogExpanded || this.eventLogExpanded) {
       if (key === "escape") {
         this.activityLogExpanded = false;
+        this.eventLogExpanded = false;
         this.layout(this.width, this.height);
       } else {
         this.activityLog.handleKey(key);
@@ -78,7 +79,16 @@ export class CardStack {
     const editing = top instanceof MenuCard && top.isEditing();
     if (!editing && key === "+") {
       this.activityLogExpanded = true;
+      this.eventLogExpanded = false;
       this.activityLog.resetScroll();
+      this.layout(this.width, this.height);
+      return;
+    }
+    if (!editing && key === "-") {
+      this.eventLogExpanded = true;
+      this.activityLogExpanded = false;
+      this.activityLog.resetScroll();
+      this.eventLog.resetScroll();
       this.layout(this.width, this.height);
       return;
     }
@@ -94,7 +104,7 @@ export class CardStack {
     const mainY = 2;
     const bottomSeparatorY = height - 2;
     const eventLogX = 1;
-    const eventLogWidth = this.activityLogExpanded
+    const eventLogWidth = this.eventLogExpanded
       ? width - 2
       : Math.floor(width * 0.33);
     const availableHeight = Math.max(0, bottomSeparatorY - mainY);
@@ -102,42 +112,51 @@ export class CardStack {
     const activityLogWidth = this.activityLogExpanded
       ? width - 2
       : Math.floor(width * 0.66) - 2;
-    const logsHeight = this.activityLogExpanded
+    const activityLogHeight = this.activityLogExpanded
       ? availableHeight
       : Math.max(
           ACTIVITY_LOG_MIN_HEIGHT,
           Math.round(availableHeight * ACTIVITY_LOG_RATIO),
         );
-    const logsY = this.activityLogExpanded
+    const eventLogHeight = this.eventLogExpanded
+      ? availableHeight
+      : Math.max(
+          ACTIVITY_LOG_MIN_HEIGHT,
+          Math.round(availableHeight * ACTIVITY_LOG_RATIO),
+        );
+    const activityLogY = this.activityLogExpanded
       ? mainY
-      : bottomSeparatorY - logsHeight;
+      : bottomSeparatorY - activityLogHeight;
+    const eventLogY = this.eventLogExpanded
+      ? mainY
+      : bottomSeparatorY - eventLogHeight;
 
     this.root.x = mainX;
     this.root.y = mainY;
     this.root.width = Math.max(10, width - ROOT_RIGHT_MARGIN);
-    this.root.height = Math.max(3, logsY - mainY);
+    this.root.height = Math.max(3, activityLogY - mainY);
 
     let parent: Card = this.root;
     for (const card of this.stack) {
       card.x = parent.x + CASCADE_INSET;
       card.y = parent.y + CASCADE_INSET;
       card.width = Math.max(10, parent.width - CASCADE_INSET);
-      card.height = Math.max(3, logsY - card.y);
+      card.height = Math.max(3, activityLogY - card.y);
       parent = card;
     }
 
     this.eventLog.resize(
       eventLogX,
-      logsY,
+      eventLogY,
       eventLogWidth,
-      Math.max(3, logsHeight),
+      Math.max(3, eventLogHeight),
     );
 
     this.activityLog.resize(
       activityLogX,
-      logsY,
+      activityLogY,
       activityLogWidth,
-      Math.max(3, logsHeight),
+      Math.max(3, activityLogHeight),
     );
   }
 
@@ -164,8 +183,14 @@ export class CardStack {
       });
     }
 
-    this.activityLog.render(buf, true);
-    this.eventLog.render(buf, true);
+    if (this.eventLogExpanded) {
+      this.eventLog.render(buf, true);
+    } else {
+      this.activityLog.render(buf, true);
+      if (!this.activityLogExpanded) {
+        this.eventLog.render(buf, false);
+      }
+    }
 
     buf.writeText(
       0,
