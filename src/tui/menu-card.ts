@@ -54,7 +54,7 @@ export class MenuCard extends Card {
     this.onPush = options?.onPush;
     this.onPop = options?.onPop;
     this.isBusy = options?.isBusy;
-    this.secondColumnX = options?.secondColumnX ?? Math.round(width / 2) + 3;
+    this.secondColumnX = options?.secondColumnX ?? Math.round(width / 2) + 4;
     this.selectedIndex = null;
   }
 
@@ -81,7 +81,8 @@ export class MenuCard extends Card {
       const column = this.columnOf(item);
       const row = this.rowOf(item);
       const dx = column === 0 ? 3 : this.secondColumnX;
-      const dy = FIRST_ITEM_Y + row * ITEM_SPACING;
+      const dy =
+        FIRST_ITEM_Y + row * (this.items.length > 10 ? 1 : ITEM_SPACING);
       const enabled = this.isEnabled(item);
       const selected = index === this.selectedIndex;
 
