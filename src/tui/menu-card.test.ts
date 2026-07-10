@@ -162,4 +162,24 @@ describe("MenuCard navigation", () => {
     expect(onSubmit).not.toHaveBeenCalled();
     expect(menu.isEditing()).toBe(false);
   });
+
+  it("refuses to type past a field's maxLength", () => {
+    const onSubmit = vi.fn();
+    const items: MenuItem[] = [
+      {
+        key: "S",
+        label: "Start Address",
+        field: { getValue: () => "", onSubmit, maxLength: 3 },
+      },
+    ];
+    const menu = new MenuCard("Memory Monitor", 0, 0, 40, 10, items);
+
+    menu.handleKey("S");
+    for (const key of ["1", "2", "3", "4", "5"]) {
+      menu.handleKey(key);
+    }
+    menu.handleKey("return");
+
+    expect(onSubmit).toHaveBeenCalledWith("123");
+  });
 });

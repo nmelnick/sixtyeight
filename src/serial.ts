@@ -64,11 +64,11 @@ export class SerialConnection {
     this.unlock();
   }
 
-  public async waitForResponse(): Promise<string> {
+  public async waitForResponse(lastResult?: string): Promise<string> {
     this.lock();
     if (this.responseQueue.length > 0) {
       this.unlock();
-      return this.responseQueue.shift() || "";
+      return (this.responseQueue.shift() || "") + (lastResult || "");
     }
 
     return new Promise((resolve, reject) => {
@@ -76,7 +76,7 @@ export class SerialConnection {
       const onQueued = () => {
         answered = true;
         this.unlock();
-        resolve(this.responseQueue.shift() || "");
+        resolve((this.responseQueue.shift() || "") + (lastResult || ""));
       };
       this.arrayEmitter.once("queued-line", onQueued);
 

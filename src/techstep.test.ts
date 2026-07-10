@@ -106,4 +106,44 @@ describe("TechStep", () => {
 
     await expect(resultPromise).rejects.toBe(error);
   });
+
+  it("reads memory and parses the response into bytes", async () => {
+    const { connection, techStep } = setup();
+
+    const resultPromise = techStep.readMemory(0x1000, 2);
+    connection.respond("*L"); // LoadData echo
+    connection.respond("*B"); // ByteCount echo
+    connection.respond("ack"); // MemDump ack (anything but a bare "*M"/"ERROR")
+    connection.respond("XX0AFF"); // MemDump data line (2-char prefix + bytes)
+
+    await expect(resultPromise).resolves.toEqual([0x0a, 0xff]);
+  });
+
+  it("rejects when the memory dump response is malformed", async () => {
+    const { connection, techStep } = setup();
+
+    const resultPromise = techStep.readMemory(0x1000, 2);
+    connection.respond("*L");
+    connection.respond("*B");
+    connection.respond("ack");
+    connection.respond("XXgarbage");
+
+    await expect(resultPromise).rejects.toThrow(
+      /Unexpected memory dump response/,
+    );
+  });
+
+  it("rejects when the memory dump response has the wrong byte count", async () => {
+    const { connection, techStep } = setup();
+
+    const resultPromise = techStep.readMemory(0x1000, 2);
+    connection.respond("*L");
+    connection.respond("*B");
+    connection.respond("ack");
+    connection.respond("XX0A");
+
+    await expect(resultPromise).rejects.toThrow(
+      /Unexpected memory dump response/,
+    );
+  });
 });

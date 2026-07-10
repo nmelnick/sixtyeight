@@ -4,6 +4,7 @@ import { Card } from "./card.js";
 export interface MenuItemField {
   getValue: () => string;
   onSubmit: (value: string) => void;
+  maxLength?: number;
 }
 
 export interface MenuItem {
@@ -248,7 +249,15 @@ export class MenuCard extends Card {
       return true;
     }
     if (key.length === 1) {
-      this.editingValue = (this.editingValue ?? "") + key;
+      const item =
+        this.selectedIndex !== null
+          ? this.items[this.selectedIndex]
+          : undefined;
+      const maxLength = item?.field?.maxLength;
+      const current = this.editingValue ?? "";
+      if (maxLength === undefined || current.length < maxLength) {
+        this.editingValue = current + key;
+      }
       return true;
     }
     return true;
