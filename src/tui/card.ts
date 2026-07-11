@@ -23,14 +23,11 @@ export abstract class Card {
   }
 
   /**
-   * Draws the FileCard chrome (tab + border) at this card's position, then delegates
-   * to renderContent.
+   * Draws the FileCard chrome (tab + border) at this card's position, then
+   * delegates to renderContent.
    *
    * @param active Pass `false` for a card sitting behind an open submenu so its
    *   border dims instead of competing with the foreground card.
-   * @param connectCorners Whether the upper corners connect down to the lower ones
-   *   (only makes sense for a card cascaded on top of another — the root/base card
-   *   never gets this treatment, even while active). Defaults to `active`.
    */
   public render(buf: Buffer2D, active: boolean = true): void {
     this.renderChrome(buf, active ? CellAttr.Border : CellAttr.BorderDim);

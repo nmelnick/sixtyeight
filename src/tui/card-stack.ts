@@ -1,4 +1,3 @@
-import { Logger } from "../logger.js";
 import { ActivityLog } from "./activity-log.js";
 import { Buffer2D, CellAttr } from "./buffer.js";
 import { Card } from "./card.js";
@@ -27,8 +26,6 @@ export class CardStack {
   private activityLogExpanded: boolean = false;
   private eventLogExpanded: boolean = false;
   private status: StatusProvider;
-  private sessionStart: number = Date.now();
-  private lastMessageTime: number = Date.now();
   private width: number = 80;
   private height: number = 25;
 
@@ -42,9 +39,6 @@ export class CardStack {
     this.activityLog = activityLog;
     this.eventLog = eventLog;
     this.status = status;
-    Logger.onAppend(() => {
-      this.lastMessageTime = Date.now();
-    });
   }
 
   public push(card: Card): void {
@@ -205,8 +199,6 @@ export class CardStack {
         this.width,
         this.status.getLastStatus(),
         this.status.getLastError(),
-        Date.now() - this.sessionStart,
-        Date.now() - this.lastMessageTime,
       ),
       CellAttr.Header,
     );

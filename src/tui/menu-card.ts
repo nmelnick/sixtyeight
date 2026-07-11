@@ -22,12 +22,6 @@ const ITEM_SPACING = 2;
 
 export class MenuCard extends Card {
   private items: MenuItem[];
-  /**
-   * No item is selected when a card is first shown — Enter is a no-op until the
-   * user explicitly arrows to an item or presses its hotkey. This prevents a
-   * stray/repeated Enter (e.g. held down while dismissing the parent menu) from
-   * landing on a pre-armed first item and firing a test the moment a submenu opens.
-   */
   private selectedIndex: number | null;
   private secondColumnX: number;
   private onPush: ((card: Card) => void) | undefined;

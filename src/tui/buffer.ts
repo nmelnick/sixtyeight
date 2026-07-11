@@ -18,10 +18,6 @@ export enum CellAttr {
   Error = "error",
 }
 
-// blessed's tag parser only recognizes a fixed set of style/color names (see
-// Program.prototype.attr in blessed/lib/program.js) — there is no "dim" attribute,
-// so a literal {dim} tag falls through unrecognized and prints as-is. Use a grey
-// foreground color instead to get the same washed-out "disabled" look.
 const TAG_OPEN: Record<Exclude<CellAttr, CellAttr.Normal>, string> = {
   [CellAttr.Dim]: "{grey-fg}",
   [CellAttr.Reverse]: "{inverse}",
