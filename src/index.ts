@@ -256,9 +256,23 @@ async function go() {
   }
 
   const filename = `sixtyeight-${new Date().toISOString().replace("T", "_").replace("Z", "").replace(":", "-")}.log`;
-  const logStream = fs.createWriteStream(filename);
+  let logStream: fs.WriteStream | undefined;
 
-  Logger.onAppend((line) => logStream.write(line + "\n"));
+  Logger.onAppend((line) => {
+    if (!Config.writeActivityLogToFile) {
+      return;
+    }
+    logStream ??= fs.createWriteStream(filename);
+    logStream.write(line + "\n");
+  });
+
+  let tuiRendered = false;
+  Logger.onAppend((line) => {
+    if (!tuiRendered) {
+      console.log(line);
+    }
+  });
+
   Logger.log("Connecting...");
   await serial.send("\r\n");
   connected = true;
@@ -418,6 +432,18 @@ async function go() {
         );
       },
     },
+    {
+      key: "L",
+      label: `Write activity log to file: ${Config.writeActivityLogToFile ? "On" : "Off"}`,
+      onSelect: () => {
+        Config.writeActivityLogToFile = !Config.writeActivityLogToFile;
+        Config.save();
+        settingsItems[2].label = `Write activity log to file: ${Config.writeActivityLogToFile ? "On" : "Off"}`;
+        Logger.log(
+          `Write activity log to file: ${Config.writeActivityLogToFile ? "On" : "Off"}`,
+        );
+      },
+    },
   ];
 
   const utilityItems: MenuItem[] = [
@@ -486,7 +512,7 @@ async function go() {
         key: "5",
         label: "Settings",
         submenu: () =>
-          new MenuCard("Settings", 0, 0, 60, 6, settingsItems, {
+          new MenuCard("Settings", 0, 0, 60, 8, settingsItems, {
             onPush: (card) => cardStack.push(card),
             onPop: () => cardStack.pop(),
             isBusy,
@@ -540,6 +566,7 @@ async function go() {
 
   cardStack = new CardStack(mainMenu, activityLog, eventLog, status);
 
+  tuiRendered = true;
   const screen = new Screen(cardStack);
   screen.start();
   screen.render();
