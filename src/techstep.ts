@@ -170,20 +170,22 @@ export class TechStep {
     byteCount: number = 4,
   ): Promise<number[]> {
     await this.startConversation();
-    await this.command(COMMANDS.LoadData, ...splitNumberTwoBytes(address));
-    await this.command(COMMANDS.ByteCount, byteCount);
-    const result = (await this.command(COMMANDS.MemDump)) || "";
-    this.stopConversation();
-    const bytes =
-      result
-        .substring(2)
-        .substring(0, 2 * byteCount)
-        .match(/.{2}/g)
-        ?.map(hexToNumber) ?? [];
-    if (bytes.length !== byteCount || bytes.some((b) => Number.isNaN(b))) {
-      throw new Error(`Unexpected memory dump response: "${result}"`);
+    try {
+      await this.command(COMMANDS.LoadData, ...splitNumberTwoBytes(address));
+      await this.command(COMMANDS.ByteCount, byteCount);
+      const result = (await this.command(COMMANDS.MemDump)) || "";
+      const bytes = result
+        .split("\n")
+        .flatMap((line) => line.match(/.{2}/g) ?? [])
+        .slice(0, byteCount)
+        .map(hexToNumber);
+      if (bytes.length !== byteCount || bytes.some((b) => Number.isNaN(b))) {
+        throw new Error(`Unexpected memory dump response: "${result}"`);
+      }
+      return bytes;
+    } finally {
+      this.stopConversation();
     }
-    return bytes;
   }
 
   public criticalTest = {
@@ -379,8 +381,17 @@ export class TechStep {
       this.stopConversation();
       throw new Error(result);
     } else if (waitFor && waitFor === "*M") {
-      const nextResult = await this.serial.waitForResponse(result);
-      return nextResult;
+      const lines: string[] = [result];
+      let line = await this.serial.waitForResponse();
+      while (line !== waitFor) {
+        if (line.indexOf("ERROR") > -1) {
+          this.stopConversation();
+          throw new Error(line);
+        }
+        lines.push(line);
+        line = await this.serial.waitForResponse();
+      }
+      return lines.join("\n");
     }
     return result;
   }

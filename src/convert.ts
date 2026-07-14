@@ -11,3 +11,7 @@ export function splitNumberTwoBytes(num: number): number[] {
     hexToNumber(v),
   );
 }
+
+export function toAsciiChar(value: number): string {
+  return value >= 0x20 && value < 0x7f ? String.fromCharCode(value) : ".";
+}

@@ -1,5 +1,6 @@
 import { Buffer2D, CellAttr } from "./buffer.js";
 import { Card } from "./card.js";
+import { handleTextFieldKey } from "./text-field.js";
 
 export interface MenuItemField {
   getValue: () => string;
@@ -224,36 +225,22 @@ export class MenuCard extends Card {
   }
 
   private handleEditKey(key: string): boolean {
-    if (key === "return") {
-      const item =
-        this.selectedIndex !== null
-          ? this.items[this.selectedIndex]
-          : undefined;
+    const item =
+      this.selectedIndex !== null ? this.items[this.selectedIndex] : undefined;
+    const result = handleTextFieldKey(
+      this.editingValue ?? "",
+      key,
+      item?.field?.maxLength,
+    );
+    if (result.action === "commit") {
       if (item?.field && this.editingValue !== undefined) {
         item.field.onSubmit(this.editingValue);
       }
       this.editingValue = undefined;
-      return true;
-    }
-    if (key === "escape") {
+    } else if (result.action === "cancel") {
       this.editingValue = undefined;
-      return true;
-    }
-    if (key === "backspace") {
-      this.editingValue = (this.editingValue ?? "").slice(0, -1);
-      return true;
-    }
-    if (key.length === 1) {
-      const item =
-        this.selectedIndex !== null
-          ? this.items[this.selectedIndex]
-          : undefined;
-      const maxLength = item?.field?.maxLength;
-      const current = this.editingValue ?? "";
-      if (maxLength === undefined || current.length < maxLength) {
-        this.editingValue = current + key;
-      }
-      return true;
+    } else {
+      this.editingValue = result.value;
     }
     return true;
   }

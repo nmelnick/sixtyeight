@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { TechStep } from "./techstep.js";
 import type { SerialConnection } from "./serial.js";
+import { TechStep } from "./techstep.js";
 
 class FakeConnection {
   public written: string[] = [];
@@ -111,12 +111,65 @@ describe("TechStep", () => {
     const { connection, techStep } = setup();
 
     const resultPromise = techStep.readMemory(0x1000, 2);
-    connection.respond("*L"); // LoadData echo
-    connection.respond("*B"); // ByteCount echo
-    connection.respond("ack"); // MemDump ack (anything but a bare "*M"/"ERROR")
-    connection.respond("XX0AFF"); // MemDump data line (2-char prefix + bytes)
+    connection.respond("*L");
+    connection.respond("*B");
+    connection.respond("0AFF");
+    connection.respond("*M");
 
     await expect(resultPromise).resolves.toEqual([0x0a, 0xff]);
+  });
+
+  it("rejects and stops waiting when an ERROR line arrives mid-dump", async () => {
+    const { connection, techStep } = setup();
+
+    const resultPromise = techStep.readMemory(0x1000, 8);
+    connection.respond("*L");
+    connection.respond("*B");
+    connection.respond("0A0B0C0D");
+    connection.respond("*ERROR*");
+
+    await expect(resultPromise).rejects.toThrow("*ERROR*");
+    connection.respond("*V");
+    await expect(techStep.version()).resolves.toBeUndefined();
+  });
+
+  it("requests the byte count as a zero-padded four-digit hex word", async () => {
+    const { connection, techStep } = setup();
+
+    const resultPromise = techStep.readMemory(0x1000, 32);
+    connection.respond("*L");
+    connection.respond("*B");
+    for (let i = 0; i < 8; i++) {
+      connection.respond("0A".repeat(4));
+    }
+    connection.respond("*M");
+
+    await expect(resultPromise).resolves.toEqual(new Array(32).fill(0x0a));
+    expect(connection.written).toEqual(["*L00001000", "*B0020", "*M"]);
+  });
+
+  it("parses a multi-line 32-byte memory dump, stopping at the *M terminator", async () => {
+    const { connection, techStep } = setup();
+
+    const bytes = Array.from({ length: 32 }, (_, i) => i);
+    const lines: string[] = [];
+    for (let i = 0; i < bytes.length; i += 4) {
+      const hex = bytes
+        .slice(i, i + 4)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+      lines.push(hex);
+    }
+
+    const resultPromise = techStep.readMemory(0x1000, 32);
+    connection.respond("*L");
+    connection.respond("*B");
+    for (const line of lines) {
+      connection.respond(line);
+    }
+    connection.respond("*M");
+
+    await expect(resultPromise).resolves.toEqual(bytes);
   });
 
   it("rejects when the memory dump response is malformed", async () => {
@@ -125,8 +178,8 @@ describe("TechStep", () => {
     const resultPromise = techStep.readMemory(0x1000, 2);
     connection.respond("*L");
     connection.respond("*B");
-    connection.respond("ack");
-    connection.respond("XXgarbage");
+    connection.respond("garbage");
+    connection.respond("*M");
 
     await expect(resultPromise).rejects.toThrow(
       /Unexpected memory dump response/,
@@ -139,8 +192,8 @@ describe("TechStep", () => {
     const resultPromise = techStep.readMemory(0x1000, 2);
     connection.respond("*L");
     connection.respond("*B");
-    connection.respond("ack");
-    connection.respond("XX0A");
+    connection.respond("0A");
+    connection.respond("*M");
 
     await expect(resultPromise).rejects.toThrow(
       /Unexpected memory dump response/,
