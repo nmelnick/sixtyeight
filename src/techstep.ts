@@ -167,7 +167,7 @@ export class TechStep {
 
   public async readMemory(
     address: number,
-    byteCount: number = 1,
+    byteCount: number = 4,
   ): Promise<number[]> {
     await this.startConversation();
     await this.command(COMMANDS.LoadData, ...splitNumberTwoBytes(address));

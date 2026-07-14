@@ -5,6 +5,7 @@ import { CellAttr } from "./buffer.js";
 import { LogCard, type LogLine } from "./log-card.js";
 
 const HISTORY_LENGTH = 8;
+const READ_BATCH_SIZE = 4;
 
 export class MonitorCard extends LogCard {
   private addresses: number[];
@@ -36,6 +37,30 @@ export class MonitorCard extends LogCard {
     void this.poll(intervalSeconds * 1000);
   }
 
+  private groupContiguousAddresses(): number[][] {
+    const groups: number[][] = [];
+    let current: number[] = [];
+    for (const address of this.addresses) {
+      const last = current[current.length - 1];
+      if (
+        current.length > 0 &&
+        current.length < READ_BATCH_SIZE &&
+        last === address - 1
+      ) {
+        current.push(address);
+      } else {
+        if (current.length > 0) {
+          groups.push(current);
+        }
+        current = [address];
+      }
+    }
+    if (current.length > 0) {
+      groups.push(current);
+    }
+    return groups;
+  }
+
   private schedule(intervalMs: number): void {
     this.timer = setTimeout(() => {
       void this.poll(intervalMs);
@@ -53,23 +78,34 @@ export class MonitorCard extends LogCard {
     }
     this.busy = true;
     this.changed.clear();
-    for (const address of this.addresses) {
+    for (const group of this.groupContiguousAddresses()) {
       try {
-        const [value] = await this.techstep.readMemory(address, 1);
-        const history = this.history.get(address) ?? [];
-        const previous = history[history.length - 1];
-        if (previous !== undefined && previous !== value) {
-          this.changed.add(address);
-        }
-        history.push(value);
-        if (history.length > HISTORY_LENGTH) {
-          history.shift();
-        }
-        this.history.set(address, history);
-      } catch (e: unknown) {
-        Logger.error(
-          `Memory Monitor read of ${numberToHex(address, 8)} failed: ${Error.isError(e) ? e.message : ""}`,
+        const values = await this.techstep.readMemory(
+          group[0],
+          READ_BATCH_SIZE,
         );
+        group.forEach((address, offset) => {
+          const value = values[offset];
+          if (value === undefined) {
+            return;
+          }
+          const history = this.history.get(address) ?? [];
+          const previous = history[history.length - 1];
+          if (previous !== undefined && previous !== value) {
+            this.changed.add(address);
+          }
+          history.push(value);
+          if (history.length > HISTORY_LENGTH) {
+            history.shift();
+          }
+          this.history.set(address, history);
+        });
+      } catch (e: unknown) {
+        for (const address of group) {
+          Logger.error(
+            `Memory Monitor read of ${numberToHex(address, 8)} failed: ${Error.isError(e) ? e.message : ""}`,
+          );
+        }
       }
     }
     Logger.log("Memory Monitor poll complete");
