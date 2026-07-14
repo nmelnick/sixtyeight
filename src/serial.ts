@@ -22,8 +22,9 @@ export class SerialConnection {
     });
     this.serialPort.on("data", (data: Buffer) => {
       if (data[0] === "?".charCodeAt(0)) {
-        this.responseQueue.push(data.toString());
-        this.arrayEmitter.emit("queued-line");
+        const line = data.toString();
+        this.responseQueue.push(line);
+        this.arrayEmitter.emit("queued-line", line);
       }
     });
     this.serialPort.on("error", (error) => {
@@ -34,10 +35,10 @@ export class SerialConnection {
     );
     asLines.on("data", (line: string) => {
       this.responseQueue.push(line);
-      this.arrayEmitter.emit("queued-line");
+      this.arrayEmitter.emit("queued-line", line);
     });
-    this.arrayEmitter.on("queued-line", () => {
-      Logger.log(`Received: "${this.responseQueue[0].replace(/[\r\n]/g, "")}"`);
+    this.arrayEmitter.on("queued-line", (line: string) => {
+      Logger.log(`Received: "${line.replace(/[\r\n]/g, "")}"`);
     });
   }
 
@@ -64,11 +65,11 @@ export class SerialConnection {
     this.unlock();
   }
 
-  public async waitForResponse(lastResult?: string): Promise<string> {
+  public async waitForResponse(): Promise<string> {
     this.lock();
     if (this.responseQueue.length > 0) {
       this.unlock();
-      return (this.responseQueue.shift() || "") + (lastResult || "");
+      return this.responseQueue.shift() || "";
     }
 
     return new Promise((resolve, reject) => {
@@ -76,7 +77,7 @@ export class SerialConnection {
       const onQueued = () => {
         answered = true;
         this.unlock();
-        resolve((this.responseQueue.shift() || "") + (lastResult || ""));
+        resolve(this.responseQueue.shift() || "");
       };
       this.arrayEmitter.once("queued-line", onQueued);
 

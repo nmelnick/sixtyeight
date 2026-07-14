@@ -9,6 +9,7 @@ import { Tester } from "./tester.js";
 import { ActivityLog } from "./tui/activity-log.js";
 import { CardStack, type StatusProvider } from "./tui/card-stack.js";
 import { EventLog } from "./tui/event-log.js";
+import { HexViewCard } from "./tui/hex-view-card.js";
 import { MenuCard, type MenuItem } from "./tui/menu-card.js";
 import { MonitorCard } from "./tui/monitor-card.js";
 import { Screen } from "./tui/screen.js";
@@ -424,6 +425,11 @@ async function go() {
       key: "1",
       label: "Memory Monitor",
       submenu: () => createMemoryMonitorConfig(),
+    },
+    {
+      key: "2",
+      label: "View Memory",
+      submenu: () => new HexViewCard(ts, 0, () => cardStack.pop()),
     },
   ];
 
